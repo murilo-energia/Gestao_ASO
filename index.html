@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASO Manager — Grupo Energia</title>
+<title>OcupaTrack — Grupo Energia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -719,7 +719,13 @@ canvas { max-height:200px; }
         <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password">
       </div>
       <button class="btn-login" onclick="doLogin()">Entrar no sistema →</button>
-      <div class="login-footer">Grupo Energia © <span id="anoLogin"></span> · Sistema interno</div>
+      <div class="login-footer" style="margin-top:28px;border-top:1px solid var(--bd);padding-top:16px">
+  <div style="font-size:11px;color:var(--t4);margin-bottom:6px">Grupo Energia © <span id="anoLogin"></span></div>
+  <div style="font-size:10.5px;color:var(--t4);line-height:1.7;font-style:italic">
+    Concebido &amp; desenvolvido por<br>
+    <span style="font-size:12px;font-style:normal;font-weight:600;color:var(--t3);letter-spacing:.2px">Murilo Henrique Roberto</span>
+  </div>
+</div>
     </div>
   </div>
 </div>
@@ -736,7 +742,7 @@ canvas { max-height:200px; }
            onerror="this.style.display='none';document.getElementById('sbFb').style.display='block'">
       <span id="sbFb" style="display:none" class="sidebar-logo-fb">◈</span>
       <div>
-        <div class="sidebar-logo-label">ASO Manager</div>
+        <div class="sidebar-logo-label">OcupaTrack</div>
       </div>
     </div>
     <nav class="sidebar-nav">
@@ -963,7 +969,7 @@ canvas { max-height:200px; }
           <div class="card">
             <div class="card-header"><div class="card-title">Sobre o Sistema</div></div>
             <div class="modal-body" style="font-size:13px;color:var(--t2);line-height:1.8">
-              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--brand);margin-bottom:8px">ASO Manager v3.0</div>
+              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--brand);margin-bottom:8px">OcupaTrack — Gestão de ASOs</div>
               <div style="margin-bottom:14px;color:var(--t3)">Grupo Energia — Sistema interno</div>
               <div><strong>Fluxo automatizado:</strong> vencimentos identificados → e-mail ao responsável → sugestão de data → lembrete 1 dia antes → registro pelo admin → resultado → novo ciclo.</div>
               <div class="sep"></div>
@@ -972,6 +978,12 @@ canvas { max-height:200px; }
               <div><strong>Alertas:</strong> E-mail automático — 60d, 30d, vencido, 1d antes</div>
               <div class="sep"></div>
               <div style="font-size:11.5px;color:var(--t4)">Arquitetura: CSV público + GAS endpoint · Sem servidor · Sem custo</div>
+              <div class="sep"></div>
+              <div style="font-size:11px;color:var(--t4);line-height:1.8;font-style:italic">
+                Concebido &amp; desenvolvido por<br>
+                <span style="font-size:12.5px;font-style:normal;font-weight:600;color:var(--t3)">Murilo Henrique Roberto</span><br>
+                <span style="font-size:10.5px">Grupo Energia · <span id="anoSobre"></span></span>
+              </div</div>
             </div>
           </div>
         </div>
@@ -1396,12 +1408,18 @@ function cancelConf(){S.pendConf=null;}
 
 // ── GAS POST ─────────────────────────────────────────
 async function gasPost(acao,dados){
+  // text/plain evita preflight CORS — o GAS recebe e parseia normalmente
   const res=await fetch(CFG.GAS_URL,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({acao,...dados}),redirect:'follow',
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({acao,...dados}),
+    redirect:'follow',
   });
-  try{const d=await res.json();return d.msg||'✅ OK';}
-  catch(e){return'✅ Ação registrada.';}
+  try{
+    const txt=await res.text();
+    const d=JSON.parse(txt);
+    return d.msg||'✅ OK';
+  }catch(e){return'✅ Ação registrada.';}
 }
 
 // ── Modal: Realizado ──────────────────────────────────
@@ -1614,7 +1632,7 @@ function buildDash(){
     </div>`).join(''):'<div class="empty-txt" style="color:var(--t4);padding:16px;text-align:center">Sem dados</div>';
 
   const topSetor=Object.entries(ps).map(([s,d])=>({s,pct:d.total>0?Math.round(d.ok/d.total*100):0,total:d.total})).sort((a,b)=>b.pct-a.pct).slice(0,5);
-  $('rankSetor').innerHTML=topSetor.length?topSetor.map(([],i,arr)=>{
+  $('rankSetor').innerHTML=topSetor.length?topSetor.map((x,i)=>{
     const x=topSetor[i];
     return`<div class="rank-item">
       <span class="rank-pos">${i+1}</span>
@@ -1782,14 +1800,14 @@ function exportPDF(){
     <td style="text-align:right">R$ ${fmtM(r.custo)}</td>
     <td>${r.reagend||0}</td></tr>`).join('');
   const w=window.open('','_blank','width=960,height=700');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>ASO Manager</title>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>OcupaTrack</title>
 <style>body{font-family:Arial,sans-serif;font-size:11px;color:#333;margin:20px}h1{font-size:15px;color:#E07B20;margin-bottom:3px}.sub{font-size:9.5px;color:#999;margin-bottom:12px}table{width:100%;border-collapse:collapse}th{background:#E07B20;color:#fff;padding:5px 7px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.4px}td{padding:4px 7px;border-bottom:1px solid #EEE}.foot{margin-top:10px;font-size:9px;color:#aaa;border-top:1px solid #EEE;padding-top:6px;display:flex;justify-content:space-between}@media print{button{display:none}}</style></head>
 <body><h1>◈ Grupo Energia — Gestão de ASOs</h1>
 <div class="sub">Gerado em: ${fmtDT(new Date())} · ${rows.length} registros</div>
 <table><thead><tr><th>Mat.</th><th>Nome</th><th>Setor</th><th>Tipo</th><th>Data Exame</th><th>Validade</th><th>Status</th><th>Custo</th><th>Reag.</th></tr></thead>
 <tbody>${lns}</tbody>
 <tfoot><tr style="background:#FFF0E0"><td colspan="7" style="text-align:right;font-weight:700;padding:5px 7px">Total:</td><td colspan="2" style="font-weight:800;color:#E07B20;padding:5px 7px">R$ ${fmtM(totalC)}</td></tr></tfoot></table>
-<div class="foot"><span>Grupo Energia — ASO Manager v3.0</span><span>${fmtDT(new Date())}</span></div>
+<div class="foot"><span>Grupo Energia — OcupaTrack — Gestão de ASOs</span><span>${fmtDT(new Date())}</span></div>
 <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close(); toast(`PDF: ${rows.length} registros.`,'ok');
 }
@@ -1797,6 +1815,8 @@ function exportPDF(){
 // ── Init ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
   $('anoLogin').textContent=new Date().getFullYear();
+  const anoSobre=document.getElementById('anoSobre');
+  if(anoSobre) anoSobre.textContent=new Date().getFullYear();
   loadConfig();
   // Aplica configs nas telas
   if($('cfgEmailRH')) $('cfgEmailRH').value=CFG.EMAIL_RH;
