@@ -373,7 +373,9 @@ tbody tr:hover td { background:rgba(224,123,32,.025); }
 
 /* Row classes */
 .tr-venc td { background:rgba(124,29,29,.03); }
+.tr-venc td { background:rgba(124,29,29,.04); }
 .tr-red  td { background:rgba(192,57,43,.025); }
+.tr-warn td { background:rgba(160,104,0,.02); }
 .tr-repr td { background:rgba(107,63,160,.025); }
 .tr-ret  td { background:rgba(26,93,170,.025); }
 
@@ -828,7 +830,7 @@ canvas { max-height:200px; }
                 <th>Tipo</th>
                 <th>Data Prevista</th>
                 <th>Status</th>
-                <th>Reag.</th>
+                <th>Reagend.</th>
                 <th>Custo</th>
                 <th>Obs</th>
                 <th>Ações</th>
@@ -1364,17 +1366,16 @@ async function gasPostBackground(acao, dados, onSuccess) {
     const msg = await gasPost(acao, dados);
     toastSrv(msg);
     if (onSuccess) onSuccess();
-    // Recarrega dados reais em background após 3s
-    setTimeout(() => loadAll(), 3000);
+    // NÃO recarrega automaticamente — estado local é a fonte da verdade
+    // Use o botão ↻ para sincronizar quando quiser
   } catch(e) {
-    toast('Erro ao salvar. Atualizando dados...', 'err');
-    await loadAll();
+    toast('Erro ao salvar — clique ↻ para atualizar', 'err');
   }
 }
 
 // ── PAINEL ────────────────────────────────────────────────
 const CAT_ORD   = {vencido:0,reprovado:1,retorno:2,critico:3,alerta:4,novo:5,ok:6};
-const CAT_TR    = {vencido:'tr-venc',critico:'tr-red',alerta:'',reprovado:'tr-repr',retorno:'tr-ret'};
+const CAT_TR    = {vencido:'tr-venc',critico:'tr-red',alerta:'tr-warn',reprovado:'tr-repr',retorno:'tr-ret'};
 const CAT_BADGE = {vencido:'b-dkred',critico:'b-red',alerta:'b-amber',ok:'b-green',retorno:'b-blue',reprovado:'b-purple',novo:'b-blue'};
 const CAT_LABEL = {vencido:'Vencido',critico:'Crítico',alerta:'Alerta',ok:'Em Dia',retorno:'Ret.Clínica',reprovado:'Reprovado',novo:'Novo ciclo'};
 
@@ -1419,9 +1420,10 @@ function renderPainel() {
     // Dias restantes
     let colDias = '<span style="color:var(--t4)">—</span>';
     if (dias !== null) {
-      const dc = dias<0?'var(--dk-red)':dias<=30?'var(--red)':dias<=60?'var(--amber)':'var(--green)';
-      const dl = dias>0?dias+'d':dias===0?'Hoje':Math.abs(dias)+'d atrás';
-      colDias  = `<span class="td-dias" style="color:${dc}">${dl}</span>`;
+      const dc  = dias<0?'var(--dk-red)':dias<=30?'var(--red)':dias<=60?'var(--amber)':'var(--green)';
+      const dl  = dias>0?dias+'d':dias===0?'Hoje':Math.abs(dias)+'d atrás';
+      const fw  = dias<=30 ? 'font-weight:800;font-size:13px' : 'font-weight:600';
+      colDias   = `<span class="td-dias" style="color:${dc};${fw}">${dl}</span>`;
     }
 
     // Vencimento
@@ -1530,7 +1532,9 @@ function confirmarRealizado() {
   renderKpis(); renderPainel(); updateSidebarBadge();
   toast('Exame registrado! Clique em "Registrar Resultado" quando receber o laudo.', 'ok');
 
-  gasPostBackground('processarBaixa', {rowIdx, mat, data, custo, tipo: S.mTipo, obs});
+  gasPost('processarBaixa', {rowIdx, mat, data, custo, tipo: S.mTipo, obs})
+    .then(msg => { if(msg && !msg.startsWith('✅')) toastSrv(msg); })
+    .catch(() => toast('Erro ao salvar — clique ↻','err'));
 }
 
 function selRes(r) {
@@ -1565,8 +1569,9 @@ function confirmarResultado() {
       // CORREÇÃO: validade = dataExame (dia que o colab fez o exame) + 365 dias
       // NÃO usa a data de retorno da clínica
       const dataExame    = g.dataExame;
+      // +365 dias via timestamp — funciona corretamente em qualquer mês/ano
       const novaValidade = dataExame
-        ? new Date(dataExame.getFullYear(), dataExame.getMonth(), dataExame.getDate() + 365, 12)
+        ? new Date(dataExame.getTime() + 365 * 24 * 60 * 60 * 1000)
         : null;
 
       // Encerra o ciclo atual
@@ -1616,7 +1621,9 @@ function confirmarResultado() {
   }
 
   renderKpis(); renderPainel(); updateSidebarBadge();
-  gasPostBackground('processarRetorno', {rowIdx, mat, data, custo, resultado, obs});
+  gasPost('processarRetorno', {rowIdx, mat, data, custo, resultado, obs})
+    .then(msg => { if(msg && !msg.startsWith('✅')) toastSrv(msg); })
+    .catch(() => toast('Erro ao salvar — clique ↻','err'));
 }
 
 function openReag(rowIdx, mat, nome, isReexame) {
@@ -1653,7 +1660,9 @@ function confirmarReag() {
   });
   toast((isReexame ? 'Reexame' : 'Reagendamento') + ' registrado!', 'ok');
 
-  gasPostBackground('processarReagendamento', {rowIdx, mat, data, isReexame, obs});
+  gasPost('processarReagendamento', {rowIdx, mat, data, isReexame, obs})
+    .then(msg => { if(msg && !msg.startsWith('✅')) toastSrv(msg); })
+    .catch(() => toast('Erro ao salvar — clique ↻','err'));
 }
 
 function openObs(nome, obs) { $('mObsNome').value=nome; $('mObsTxt').value=obs; openModal('mObs'); }
@@ -1851,7 +1860,10 @@ async function salvarColab() {
     S.colab.push({mat:d.mat,nome:d.nome,setor:d.setor,email:d.email,sit:d.sit,aso:parseDate(d.aso),adm:parseDate(d.adm),cpf:d.cpf});
   }
   renderColab(); toast('Colaborador salvo!','ok');
-  gasPostBackground('salvarColaborador', d, () => loadAll());
+  // Salva sem recarregar automaticamente — estado local já foi atualizado
+  gasPost('salvarColaborador', d)
+    .then(msg => toastSrv(msg))
+    .catch(() => toast('Erro ao salvar no servidor — clique ↻ para verificar','err'));
 }
 
 async function excluirColab() {
@@ -1861,7 +1873,9 @@ async function excluirColab() {
   S.colab = S.colab.filter(c => c.mat !== mat);
   renderColab(); renderKpis(); renderPainel(); updateSidebarBadge();
   toast('Colaborador excluído.','ok');
-  gasPostBackground('excluirColaborador', {mat});
+  gasPost('excluirColaborador', {mat})
+    .then(msg => toastSrv(msg))
+    .catch(() => toast('Erro ao excluir — clique ↻ para verificar','err'));
 }
 
 async function sincronizar() {
@@ -2017,6 +2031,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+
 
 
 </body>
