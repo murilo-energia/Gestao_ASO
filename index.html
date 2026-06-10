@@ -1229,7 +1229,8 @@ function categorize(g) {
   if (retorno && status !== 'REPROVADO') return 'encerrado'; // ciclo aprovado
   if (status === 'REPROVADO') return 'reprovado';
   if (status === 'REALIZADO' && !retorno) return 'retorno';
-  if (!validade) return 'novo';
+  // Novo ciclo PENDENTE com validade já calculada → categorizar normalmente
+  if (!validade) return 'novo'; // sem histórico nenhum
   const dias = Math.ceil((validade - midnight()) / 86400000);
   if (dias < 0)  return 'vencido';
   if (dias <= CFG.DIAS_30) return 'critico';
@@ -1427,8 +1428,14 @@ function renderPainel() {
     // CORREÇÃO: novo ciclo mostra a validade projetada do último ASO + 1 ano
     // como ainda não foi realizado, mostra "Aguardando exame" de forma clara
     let colVenc;
-    if (isNC || !validade) {
-      colVenc = `<span class="badge b-blue">Aguardando exame</span>`;
+    if (isNC && validade) {
+      // Novo ciclo com validade calculada — mostra data + indicador de novo
+      const diasNC = diasR(item);
+      const bClsNC = diasNC === null ? 'b-blue' : diasNC < 0 ? 'b-dkred' : diasNC <= 30 ? 'b-red' : diasNC <= 60 ? 'b-amber' : 'b-green';
+      colVenc = `<span class="badge ${bClsNC}">${fmtD(validade)}</span>`;
+    } else if (isNC || !validade) {
+      // Novo ciclo sem validade ainda (exame nunca realizado)
+      colVenc = `<span class="badge b-gray">Sem histórico</span>`;
     } else {
       colVenc = `<span class="badge ${bCls}">${fmtD(validade)}</span>`;
     }
@@ -1509,15 +1516,20 @@ function confirmarRealizado() {
   if (!data) { toast('Informe a data do exame.','warn'); return; }
   closeModal('mRealizado');
 
-  // OPTIMISTIC UI: atualiza localmente na hora
-  optimisticUpdate(rowIdx, {
-    status: 'REALIZADO', dataExame: parseDate(data),
-    custo: Number(custo), tipo: S.mTipo, obs,
-    situacao: 'RETORNO PENDENTE'
-  });
-  toast('Exame registrado!', 'ok');
+  // OPTIMISTIC UI: muda status para REALIZADO — botão "Registrar Resultado" aparece na hora
+  const idx = S.gestao.findIndex(g => g.rowIdx === rowIdx);
+  if (idx !== -1) {
+    S.gestao[idx].status    = 'REALIZADO';
+    S.gestao[idx].dataExame = parseDate(data);
+    S.gestao[idx].custo     = Number(custo);
+    S.gestao[idx].tipo      = S.mTipo;
+    S.gestao[idx].obs       = obs;
+    S.gestao[idx].retorno   = null; // garante que cat = 'retorno'
+    S.gestao[idx].situacao  = 'RETORNO PENDENTE';
+  }
+  renderKpis(); renderPainel(); updateSidebarBadge();
+  toast('Exame registrado! Clique em "Registrar Resultado" quando receber o laudo.', 'ok');
 
-  // Salva em background
   gasPostBackground('processarBaixa', {rowIdx, mat, data, custo, tipo: S.mTipo, obs});
 }
 
@@ -1536,42 +1548,71 @@ function openResult(rowIdx, mat, nome, custo) {
 }
 
 function confirmarResultado() {
-  const rowIdx   = Number($('mResRowId').value);
-  const mat      = $('mResMat').value;
-  const data     = $('mResData').value;
-  const custo    = $('mResCusto').value || 0;
-  const obs      = $('mResObs').value;
+  const rowIdx    = Number($('mResRowId').value);
+  const mat       = $('mResMat').value;
+  const data      = $('mResData').value;  // data do retorno da clínica
+  const custo     = $('mResCusto').value || 0;
+  const obs       = $('mResObs').value;
   const resultado = S.mRes;
   if (!data) { toast('Informe a data de retorno.','warn'); return; }
   closeModal('mResultado');
 
+  const idx = S.gestao.findIndex(g => g.rowIdx === rowIdx);
+
   if (resultado === 'APROVADO') {
-    // OPTIMISTIC UI: encerra ciclo localmente e cria novo
-    const idx = S.gestao.findIndex(g => g.rowIdx === rowIdx);
     if (idx !== -1) {
-      // Calcula validade = data exame + 365
-      const dataExame = S.gestao[idx].dataExame;
-      const novaValidade = dataExame ? new Date(dataExame.getTime() + 365*24*60*60*1000) : null;
-      Object.assign(S.gestao[idx], {
-        retorno: parseDate(data), status: 'APROVADO',
-        situacao: 'APROVADO — CICLO ENCERRADO', validade: novaValidade,
-      });
-      // Adiciona novo ciclo localmente
       const g = S.gestao[idx];
+      // CORREÇÃO: validade = dataExame (dia que o colab fez o exame) + 365 dias
+      // NÃO usa a data de retorno da clínica
+      const dataExame    = g.dataExame;
+      const novaValidade = dataExame
+        ? new Date(dataExame.getFullYear(), dataExame.getMonth(), dataExame.getDate() + 365, 12)
+        : null;
+
+      // Encerra o ciclo atual
+      Object.assign(S.gestao[idx], {
+        retorno:  parseDate(data),
+        status:   'APROVADO',
+        validade: novaValidade,
+        situacao: 'APROVADO — CICLO ENCERRADO',
+      });
+
+      // Cria novo ciclo com validade já calculada a partir do último exame
+      // O colaborador não refez o exame ainda — o próximo vence em 1 ano
       S.gestao.push({
-        rowIdx: 99999, mat: g.mat, nome: g.nome, cpf: g.cpf, setor: g.setor,
-        dataExame: null, validade: null, status: 'PENDENTE',
-        situacao: 'AGUARDANDO AGENDAMENTO', tipo: 'Periódico',
-        custo: 0, email: g.email, statusNotif: 'Não Enviada',
-        statusResp: '', dataResp: null, retorno: null, reagend: 0, obs: '',
+        rowIdx:      99999,
+        mat:         g.mat,
+        nome:        g.nome,
+        cpf:         g.cpf,
+        setor:       g.setor,
+        dataExame:   null,           // ainda não foi realizado
+        validade:    novaValidade,   // vence 1 ano após o último exame
+        status:      'PENDENTE',
+        situacao:    'AGUARDANDO AGENDAMENTO',
+        tipo:        'Periódico',
+        custo:       0,
+        email:       g.email,
+        statusNotif: 'Não Enviada',
+        statusResp:  '',
+        dataResp:    null,
+        retorno:     null,
+        reagend:     0,
+        obs:         '',
       });
     }
-    toast('ASO aprovado! Novo ciclo criado.', 'ok');
+    toast('ASO aprovado! Validade calculada. Próximo ciclo iniciado.', 'ok');
+
   } else {
-    optimisticUpdate(rowIdx, {
-      status: 'REPROVADO', situacao: 'REPROVADO — AGUARDANDO REEXAME',
-    });
-    toast('ASO reprovado. Registrado.', 'warn');
+    // REPROVADO
+    if (idx !== -1) {
+      Object.assign(S.gestao[idx], {
+        retorno:  parseDate(data),
+        status:   'REPROVADO',
+        validade: null,
+        situacao: 'REPROVADO — AGUARDANDO REEXAME',
+      });
+    }
+    toast('ASO reprovado. Agende o reexame.', 'warn');
   }
 
   renderKpis(); renderPainel(); updateSidebarBadge();
@@ -1976,6 +2017,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+
 
 </body>
 </html>
