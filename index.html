@@ -614,7 +614,10 @@ canvas{max-height:200px}
         <div class="painel-toolbar">
           <input type="text" class="srch" id="srchPainel" placeholder="🔍 Nome, matrícula, setor..." oninput="applySearch()">
           <select class="fsel" id="filtSetor" onchange="applySearch()"><option value="">Todos os setores</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="setFiltroStatus('all')">✕ Limpar filtro</button>
+          <button class="btn btn-ghost btn-sm" onclick="setFiltroStatus('all')">✕ Limpar</button>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" id="btnModo" onclick="toggleModo()">≡ Lista</button>
+          </div>
         </div>
         <!-- Cards agrupados -->
         <div id="painelCards"></div>
@@ -639,6 +642,7 @@ canvas{max-height:200px}
           </div>
           <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--bd)"></div>
         </div>
+        <div id="calLegenda" style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap"></div>
       </div>
 
       <!-- INDICADORES -->
@@ -939,14 +943,21 @@ function normColab(r){
   };
 }
 function normGestao(r,i){
+  const dataExame = parseDate(r.DATA_EXAME||r['DATA EXAME']||'');
+  let   validade  = parseDate(r.VALIDADE_ASO||r['VALIDADE ASO']||'');
+  // CORREÇÃO: se dataExame existe mas validade é null (fórmula não calculou),
+  // calcular validade = dataExame + 365 dias
+  if (dataExame && !validade) {
+    validade = new Date(dataExame.getTime() + 365 * 86400000);
+  }
   return{
     rowIdx:    i+2,
     mat:       String(r.MATRICULA||r.MAT||'').trim(),
     nome:      r.NOME||r.nome||'',
     cpf:       r.CPF||r.cpf||'',
     setor:     r.SETOR||r.setor||'',
-    dataExame: parseDate(r.DATA_EXAME||r['DATA EXAME']||''),
-    validade:  parseDate(r.VALIDADE_ASO||r['VALIDADE ASO']||''),
+    dataExame,
+    validade,
     status:    (r.STATUS||r.status||'PENDENTE').toUpperCase(),
     situacao:  r.SITUACAO||r.situacao||'',
     tipo:      r.TIPO||r.tipo||'Periódico',
@@ -985,18 +996,25 @@ function getItens(){
   const cm={};S.colab.forEach(c=>cm[c.mat]=c);
   return S.gestao.map((g,i)=>{
     const c=cm[g.mat]||{};
-    return{
-      ...g,
-      rowIdx:   i+2,
-      cNome:    c.nome||g.nome,
-      cSetor:   c.setor||g.setor,
-      cSit:     c.sit||'ATIVO',
-      cEmail:   c.email||g.email,
-      cat:      categorize({...g,status:g.status}),
+    // CORREÇÃO: se gestao não tem validade, usar data ASO do Cadastro + 365
+    let validade = g.validade;
+    let dataExame = g.dataExame;
+    if (!validade && c.aso) {
+      dataExame = dataExame || c.aso;
+      validade  = new Date(c.aso.getTime() + 365 * 86400000);
+    }
+    const item = {...g, dataExame, validade,
+      rowIdx: i+2,
+      cNome:  c.nome||g.nome,
+      cSetor: c.setor||g.setor,
+      cSit:   c.sit||'ATIVO',
+      cEmail: c.email||g.email,
     };
+    item.cat = categorize(item);
+    return item;
   }).filter(g=>{
-    if(g.cSit==='INATIVO')     return false;
-    if(g.cat==='encerrado')    return false;
+    if(g.cSit==='INATIVO')  return false;
+    if(g.cat==='encerrado') return false;
     return true;
   });
 }
@@ -1115,7 +1133,11 @@ function renderPainel(){
     </div>`;
   }
 
-  $('painelCards').innerHTML=html;
+  if(modoLista){
+    $('painelCards').innerHTML = renderModoLista(items);
+  } else {
+    $('painelCards').innerHTML = html;
+  }
 }
 
 function renderCard(item, grp){
@@ -1409,13 +1431,24 @@ function renderCal(){
   const d=S.calDate,y=d.getFullYear(),m=d.getMonth();
   $('calMes').textContent=new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase());
   const itens=getItens();
+  // CORREÇÃO: mostrar vencimentos E agendamentos no calendário
+  // vencimento = dia em que o ASO expira (principal)
+  // agendado   = dia marcado para o exame
   const evByDay={};
   itens.forEach(g=>{
-    const dt=g.dataResp||g.dataExame;
-    if(!dt||dt.getFullYear()!==y||dt.getMonth()!==m)return;
-    const day=dt.getDate();
-    if(!evByDay[day])evByDay[day]=[];
-    evByDay[day].push(g);
+    // Prioridade 1: data agendada para o exame
+    const dtAgend = g.dataResp;
+    // Prioridade 2: data de vencimento
+    const dtVenc  = g.validade;
+    [
+      dtAgend && {dt:dtAgend, tipo:'agend', g},
+      dtVenc  && {dt:dtVenc,  tipo:'venc',  g},
+    ].filter(Boolean).forEach(({dt,tipo,g})=>{
+      if(dt.getFullYear()!==y||dt.getMonth()!==m)return;
+      const day=dt.getDate();
+      if(!evByDay[day])evByDay[day]=[];
+      evByDay[day].push({...g,_tipo:tipo});
+    });
   });
   const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
   const hoje=midnight();
@@ -1424,15 +1457,34 @@ function renderCal(){
   for(let day=1;day<=dim;day++){
     const isToday=new Date(y,m,day).getTime()===hoje.getTime();
     const evs=evByDay[day]||[];
-    const evHtml=evs.slice(0,4).map(ev=>{
+    // Separar vencimentos de agendamentos
+    const vencEvs  = evs.filter(e=>e._tipo==='venc');
+    const agendEvs = evs.filter(e=>e._tipo==='agend');
+    let evHtml='';
+    // Agendamentos primeiro (mais importante — ação iminente)
+    agendEvs.slice(0,2).forEach(ev=>{
       const cat=ev.cat;
-      const cls=cat==='vencido'||cat==='critico'?'ev-urgente':'';
-      return`<div class="cal-event ${cls}" title="${esc(ev.cNome)}">${esc(ev.cNome.split(' ')[0])}</div>`;
-    }).join('');
-    const more=evs.length>4?`<div style="font-size:9px;color:var(--t3)">+${evs.length-4}</div>`:'';
+      const urgente=cat==='vencido'||cat==='critico';
+      evHtml+=`<div class="cal-event${urgente?' ev-urgente':''}" title="📅 ${esc(ev.cNome)} — Exame agendado" style="border-left-color:var(--green)">📅 ${esc(ev.cNome.split(' ')[0])}</div>`;
+    });
+    // Vencimentos
+    vencEvs.slice(0,2).forEach(ev=>{
+      const cat=ev.cat;
+      const cls=cat==='vencido'?'ev-urgente':cat==='critico'?'ev-urgente':'';
+      const col=cat==='vencido'?'var(--dk-red)':cat==='critico'?'var(--red)':cat==='alerta'?'var(--amber)':'var(--green)';
+      evHtml+=`<div class="cal-event ${cls}" title="⏰ ${esc(ev.cNome)} — Vence neste dia" style="border-left-color:${col};opacity:.85">⏰ ${esc(ev.cNome.split(' ')[0])}</div>`;
+    });
+    const totalExtra=(agendEvs.length+vencEvs.length)-4;
+    const more=totalExtra>0?`<div style="font-size:9px;color:var(--t3);margin-top:2px">+${totalExtra} mais</div>`:'';
     cells.push(`<div class="cal-day${isToday?' today':''}"><div class="cal-day-num">${day}</div>${evHtml}${more}</div>`);
   }
   $('calGrid').innerHTML=cells.join('');
+  // Legenda
+  const leg=$('calLegenda');
+  if(leg) leg.innerHTML=`
+    <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--green-bg);border:1px solid var(--green);display:inline-block"></span> Exame agendado</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--amber-bg);border:1px solid var(--amber);display:inline-block"></span> Vencimento</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--red-bg);border:1px solid var(--red);display:inline-block"></span> Vencimento urgente</span>`;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1706,6 +1758,74 @@ function exportPDF(){
 }
 
 // ── Init ─────────────────────────────────────────────────
+// ── Modo de visualização (cards ou lista) ────────────────
+let modoLista = localStorage.getItem('aso_modo')==='lista';
+
+function toggleModo(){
+  modoLista = !modoLista;
+  localStorage.setItem('aso_modo', modoLista?'lista':'cards');
+  const btn=$('btnModo');
+  if(btn) btn.textContent = modoLista ? '⊞ Cards' : '≡ Lista';
+  renderPainel();
+}
+
+function renderModoLista(itens){
+  // Agrupa por categoria e renderiza como tabela compacta
+  const grupos_ordem=['vencido','retorno','reprovado','critico','alerta','ok','sem_hist'];
+  const labels={vencido:'🔴 Vencidos',retorno:'🔵 Aguard.Laudo',reprovado:'🟣 Reprovados',
+    critico:'🟠 Crítico ≤30d',alerta:'🟡 Alerta ≤60d',ok:'🟢 Em Dia',sem_hist:'⚪ Sem histórico'};
+
+  let html=`<div class="card"><table style="width:100%;min-width:680px">
+    <thead><tr>
+      <th style="width:36px"></th>
+      <th>Colaborador</th>
+      <th>Vencimento</th>
+      <th>Dias</th>
+      <th>Tipo</th>
+      <th>Agendado</th>
+      <th>Reagend.</th>
+      <th>Ações</th>
+    </tr></thead><tbody>`;
+
+  grupos_ordem.forEach(cat=>{
+    const grupo=itens.filter(i=>i.cat===cat);
+    if(!grupo.length)return;
+    const cores={vencido:'var(--dk-red)',retorno:'var(--blue)',reprovado:'var(--purple)',
+      critico:'var(--red)',alerta:'var(--amber)',ok:'var(--green)',sem_hist:'var(--t3)'};
+    const cor=cores[cat]||'var(--t3)';
+    html+=`<tr><td colspan="8" style="padding:10px 12px 4px;background:var(--s1);border-top:2px solid ${cor}20">
+      <span style="font-size:11px;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:.4px">${labels[cat]} (${grupo.length})</span>
+    </td></tr>`;
+    grupo.forEach(item=>{
+      const dias=diasR(item);
+      const dc=dias===null?'var(--t4)':dias<0?'var(--dk-red)':dias<=30?'var(--red)':dias<=60?'var(--amber)':'var(--green)';
+      const dl=dias===null?'—':dias>0?dias+'d':dias===0?'Hoje':Math.abs(dias)+'d atrás';
+      const fw=dias!==null&&dias<=30?'font-weight:800':'';
+      const isRP=item.cat==='retorno',isRJ=item.cat==='reprovado';
+      let acoes='';
+      if(isRJ) acoes=`<button class="btn btn-xs" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)" onclick="openReag(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}',true)">↺ Reexame</button>`;
+      else if(isRP) acoes=`<button class="btn btn-xs" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)" onclick="openResult(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}',${item.custo})">📋 Resultado</button>`;
+      else acoes=`<div style="display:flex;gap:4px">
+        <button class="btn btn-xs" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)" onclick="openRealizado(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}')">✓</button>
+        <button class="btn btn-xs btn-ghost" onclick="openReag(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}',false)">↺</button>
+        <button class="btn btn-xs" style="background:var(--brand-10);color:var(--brand-d);border:1px solid var(--brand-20)" onclick="openEnviarEmail(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}','${esc(item.cEmail)}')">✉</button>
+      </div>`;
+      html+=`<tr>
+        <td style="padding:6px 8px 6px 12px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cor}"></span></td>
+        <td style="padding:7px 10px"><span style="font-weight:600;font-size:13px">${esc(item.cNome)}</span><br><span style="font-size:10.5px;color:var(--t3)">#${esc(item.mat)} · ${esc(item.cSetor)}</span></td>
+        <td style="padding:7px 10px;font-size:12px">${item.validade?fmtD(item.validade):'—'}</td>
+        <td style="padding:7px 10px"><span style="color:${dc};${fw};font-family:'DM Mono',monospace;font-size:12px">${dl}</span></td>
+        <td style="padding:7px 10px"><span class="badge b-gray" style="font-size:10px">${esc(item.tipo||'—')}</span></td>
+        <td style="padding:7px 10px;font-size:11.5px;color:var(--t2)">${item.dataResp?fmtD(item.dataResp):'<span style="color:var(--t4)">—</span>'}</td>
+        <td style="padding:7px 10px;text-align:center"><span style="font-family:'DM Mono',monospace;font-size:12px;color:${item.reagend>0?'var(--amber)':'var(--t4)'}">${item.reagend||0}</span></td>
+        <td style="padding:7px 10px">${acoes}</td>
+      </tr>`;
+    });
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+
 window.addEventListener('DOMContentLoaded',()=>{
   $('anoLogin').textContent=new Date().getFullYear();
   const anoSobre=document.getElementById('anoSobre');
@@ -1714,6 +1834,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   if($('cfgEmailRH'))$('cfgEmailRH').value=CFG.EMAIL_RH;
   if($('cfgGasUrl'))$('cfgGasUrl').value=CFG.GAS_URL;
   S.filtroStatus='all';
+  // Restaurar modo salvo
+  const btnModo=$('btnModo');
+  if(btnModo) btnModo.textContent = modoLista?'⊞ Cards':'≡ Lista';
   const sess=loadSession();
   if(sess){S.sess=sess;enterApp(sess);}
   else{$('loginWrap').classList.add('show');}
