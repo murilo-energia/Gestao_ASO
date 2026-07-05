@@ -1058,11 +1058,17 @@ tbody tr:hover td { background:var(--brand-05); }
         <div id="filaPainel"></div>
       </div>
 
-      <!-- ══ AGENDA SEMANAL ══════════════════════════════ -->
+      <!-- ══ AGENDA ══════════════════════════════════════ -->
       <div class="page" id="pageAgenda">
-        <div class="section-header">
-          <div class="section-title">Agenda</div>
-          <div class="section-sub">Exames agendados e vencimentos dos próximos 30 dias</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div class="section-header" style="margin:0">
+            <div class="section-title">Agenda</div>
+            <div class="section-sub">Exames agendados e vencimentos</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-primary btn-sm" id="agendaBtnLista" onclick="setAgendaModo('lista')">≡ Lista</button>
+            <button class="btn btn-secondary btn-sm" id="agendaBtnCal"  onclick="setAgendaModo('cal')">◫ Calendário</button>
+          </div>
         </div>
         <div id="agendaWrap"></div>
       </div>
@@ -1660,11 +1666,22 @@ function renderWorkCard(item, fc) {
     </span>
   </div>`;
 
-  // Info secundária
+  // Info secundária — sem redundância
   const infoItems = [];
-  if (validade)  infoItems.push(`Vence: <strong>${fmtD(validade)}</strong>`);
-  if (dataResp)  infoItems.push(`Agendado: <strong>${fmtD(dataResp)}</strong>`);
-  if (dataExame) infoItems.push(`Exame: <strong>${fmtD(dataExame)}</strong>`);
+  // Vencimento: sempre mostrar
+  if (validade) infoItems.push(`Vence: <strong>${fmtD(validade)}</strong>`);
+  // Agendado: mostrar só se existe data prevista (admin definiu)
+  if (dataResp) infoItems.push(`Agendado: <strong>${fmtD(dataResp)}</strong>`);
+  // Exame realizado: mostrar só se diferente da validade (evita redundância)
+  // e só se não há dataResp já exibido
+  if (dataExame && !dataResp) {
+    const exameStr = fmtD(dataExame);
+    const venceStr = fmtD(validade);
+    // Só exibe "Exame" se a data for diferente da validade
+    if (exameStr !== venceStr) {
+      infoItems.push(`Exame: <strong>${exameStr}</strong>`);
+    }
+  }
   if (tipo && tipo !== 'Periódico') infoItems.push(`<span class="badge b-gray" style="font-size:10px">${esc(tipo)}</span>`);
   if (reagend > 0) infoItems.push(`<span style="color:var(--c-amber);font-size:11px;font-weight:600">↺ ${reagend}× reagendado</span>`);
   if (custo > 0)   infoItems.push(`<span style="color:var(--t3);font-size:11px">R$ ${fmtM(custo)}</span>`);
@@ -1768,7 +1785,25 @@ function confirmarResultado() {
         statusResp:'', dataResp:null, retorno:null, reagend:0, obs:'',
       });
     }
-    toast('ASO aprovado! Validade calculada. Novo ciclo criado.', 'ok');
+    // DEMISSIONAL APROVADO: inativar o colaborador (ciclo encerrado definitivamente)
+    if (idx !== -1 && S.gestao[idx].tipo === 'Demissional') {
+      const matDem = S.gestao[idx].mat;
+      const ci = S.colab.findIndex(c => c.mat === matDem);
+      if (ci !== -1) {
+        S.colab[ci].sit = 'INATIVO';
+        // NÃO cria novo ciclo — demissional encerra o vínculo
+        S.gestao.pop(); // remove o novo ciclo que foi pushado acima
+        // Salvar inativação no GAS
+        gasSave('salvarColaborador', {
+          mat: matDem, nome: S.colab[ci].nome, email: S.colab[ci].email,
+          setor: S.colab[ci].setor, cpf: S.colab[ci].cpf,
+          sit: 'INATIVO', adm: isoD(S.colab[ci].adm), aso: isoD(S.colab[ci].aso),
+        });
+        toast('ASO Demissional aprovado. Colaborador inativado automaticamente.', 'ok');
+      }
+    } else {
+      toast('ASO aprovado! Validade calculada. Novo ciclo criado.', 'ok');
+    }
   } else {
     if (idx !== -1) Object.assign(S.gestao[idx], { retorno:parseDate(data), status:'REPROVADO', validade:null, situacao:'REPROVADO — AGUARDANDO REEXAME' });
     toast('ASO reprovado. Agende o reexame.', 'warn');
@@ -1870,34 +1905,70 @@ document.querySelectorAll('.overlay').forEach(o => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  AGENDA SEMANAL
+//  AGENDA — MODO LISTA + MODO CALENDÁRIO
 // ═══════════════════════════════════════════════════════════
+let agendaModo = localStorage.getItem('aso_agenda_modo') || 'lista';
+let agendaCalDate = new Date();
+
+function setAgendaModo(modo) {
+  agendaModo = modo;
+  localStorage.setItem('aso_agenda_modo', modo);
+  const bl = $('agendaBtnLista'), bc = $('agendaBtnCal');
+  if (bl) { bl.classList.toggle('btn-primary',   modo === 'lista');
+             bl.classList.toggle('btn-secondary', modo !== 'lista'); }
+  if (bc) { bc.classList.toggle('btn-primary',   modo === 'cal');
+             bc.classList.toggle('btn-secondary', modo !== 'cal'); }
+  renderAgenda();
+}
+
+function agendaCalNav(dir) {
+  agendaCalDate = dir === 0
+    ? new Date()
+    : new Date(agendaCalDate.getFullYear(), agendaCalDate.getMonth() + dir, 1);
+  renderAgenda();
+}
+
 function renderAgenda() {
-  const hoje   = midnight();
-  const fim30  = addMs(hoje, 30 * DAY);
-  const itens  = getItens();
+  // Atualizar estado dos botões de modo
+  const bl = $('agendaBtnLista'), bc = $('agendaBtnCal');
+  if (bl) { bl.classList.toggle('btn-primary',   agendaModo === 'lista');
+             bl.classList.toggle('btn-secondary', agendaModo !== 'lista'); }
+  if (bc) { bc.classList.toggle('btn-primary',   agendaModo === 'cal');
+             bc.classList.toggle('btn-secondary', agendaModo !== 'cal'); }
+
+  if (agendaModo === 'cal') renderAgendaCal();
+  else                       renderAgendaLista();
+}
+
+function _getEventos(de, ate) {
+  const itens = getItens();
   const eventos = [];
-
   itens.forEach(g => {
-    // Evento de vencimento
-    if (g.validade && g.validade >= hoje && g.validade <= fim30) {
+    if (g.validade && g.validade >= de && g.validade <= ate)
       eventos.push({ data: g.validade, tipo: 'vencimento', item: g });
-    }
-    // Evento de exame agendado
-    if (g.dataResp && g.dataResp >= hoje && g.dataResp <= fim30) {
+    if (g.dataResp && g.dataResp >= de && g.dataResp <= ate)
       eventos.push({ data: g.dataResp, tipo: 'agendado', item: g });
-    }
   });
+  return eventos.sort((a,b) => a.data - b.data);
+}
 
-  // Ordenar por data
-  eventos.sort((a, b) => a.data - b.data);
+function _eventoAcao(ev) {
+  const { item, tipo } = ev;
+  if (tipo === 'agendado')
+    return `<button class="btn btn-secondary btn-xs" onclick="openRealizado(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}')">✓ Realizado</button>`;
+  return `<button class="btn btn-secondary btn-xs" onclick="openNotif(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}','${esc(item.cEmail)}')">✉ Notificar</button>`;
+}
+
+function renderAgendaLista() {
+  const hoje  = midnight();
+  const fim30 = addMs(hoje, 30 * DAY);
+  const eventos = _getEventos(hoje, fim30);
 
   if (!eventos.length) {
     $('agendaWrap').innerHTML = '<div class="agenda-empty">Nenhum evento nos próximos 30 dias.</div>';
     return;
   }
 
-  // Agrupar por dia
   const byDay = {};
   eventos.forEach(ev => {
     const key = isoD(ev.data);
@@ -1905,15 +1976,14 @@ function renderAgenda() {
     byDay[key].eventos.push(ev);
   });
 
-  const diasPt = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const diasPt  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const mesesPt = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   let html = '<div class="agenda-wrap">';
-  Object.entries(byDay).forEach(([key, { data, eventos }]) => {
+  Object.entries(byDay).forEach(([, { data, eventos }]) => {
     const isToday = data.getTime() === hoje.getTime();
     const isTmrw  = data.getTime() === addMs(hoje, DAY).getTime();
-    const diaSem  = diasPt[data.getDay()];
-    const label   = isToday ? 'HOJE' : isTmrw ? 'AMANHÃ' : diaSem.toUpperCase();
+    const label   = isToday ? 'HOJE' : isTmrw ? 'AMANHÃ' : diasPt[data.getDay()].toUpperCase();
     const dateStr = `${data.getDate()} de ${mesesPt[data.getMonth()]} ${data.getFullYear()}`;
 
     html += `<div class="agenda-day-group">
@@ -1925,28 +1995,97 @@ function renderAgenda() {
 
     eventos.forEach(ev => {
       const { item, tipo } = ev;
-      const cat = item.cat;
+      const cat    = item.cat;
       const dotCol = tipo === 'agendado' ? 'var(--c-green)' : cat === 'vencido' ? 'var(--c-red)' : cat === 'critico' ? 'var(--c-orange)' : 'var(--c-amber)';
-      const tipoLabel = tipo === 'agendado' ? '📅 Exame agendado' : '⏰ ASO vence';
-      let acaoHtml = '';
-      if (tipo === 'agendado') {
-        acaoHtml = `<button class="btn btn-secondary btn-xs" onclick="openRealizado(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}')">✓ Marcar realizado</button>`;
-      } else {
-        acaoHtml = `<button class="btn btn-secondary btn-xs" onclick="openNotif(${item.rowIdx},'${esc(item.mat)}','${esc(item.cNome)}','${esc(item.cEmail)}')">✉ Notificar</button>`;
-      }
-
+      const label  = tipo === 'agendado' ? '📅 Exame agendado' : '⏰ ASO vence';
       html += `<div class="agenda-item">
         <span class="dot" style="background:${dotCol}"></span>
         <div style="flex:1;min-width:0">
           <div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(item.cNome)}</div>
-          <div style="font-size:11.5px;color:var(--t3)">${tipoLabel} · ${esc(item.cSetor)} · ${esc(item.tipo || 'Periódico')}</div>
+          <div style="font-size:11.5px;color:var(--t3)">${label} · ${esc(item.cSetor)} · ${esc(item.tipo || 'Periódico')}</div>
         </div>
-        ${acaoHtml}
+        ${_eventoAcao(ev)}
       </div>`;
     });
     html += '</div>';
   });
   html += '</div>';
+  $('agendaWrap').innerHTML = html;
+}
+
+function renderAgendaCal() {
+  const d = agendaCalDate, y = d.getFullYear(), m = d.getMonth();
+  const mesesPt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const mesInicio = new Date(y, m, 1);
+  const mesFim    = new Date(y, m + 1, 0, 23, 59, 59);
+  const eventos   = _getEventos(mesInicio, addMs(mesFim, DAY));
+
+  // Agrupar por dia
+  const byDay = {};
+  eventos.forEach(ev => {
+    const day = ev.data.getDate();
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(ev);
+  });
+
+  const hoje  = midnight();
+  const first = new Date(y, m, 1).getDay();
+  const dim   = new Date(y, m + 1, 0).getDate();
+
+  let html = `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-size:16px;font-weight:700;color:var(--t1);letter-spacing:-.3px">${mesesPt[m]} ${y}</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-secondary btn-sm" onclick="agendaCalNav(-1)">← Anterior</button>
+      <button class="btn btn-secondary btn-sm" onclick="agendaCalNav(0)">Hoje</button>
+      <button class="btn btn-secondary btn-sm" onclick="agendaCalNav(1)">Próximo →</button>
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--bd)">
+      ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d =>
+        `<div style="text-align:center;font-size:10.5px;font-weight:700;color:var(--t3);text-transform:uppercase;padding:8px 0">${d}</div>`
+      ).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--bd)">`;
+
+  // Células vazias
+  for (let i = 0; i < first; i++) {
+    html += `<div style="min-height:80px;background:var(--sf);opacity:.35"></div>`;
+  }
+
+  for (let day = 1; day <= dim; day++) {
+    const isToday = new Date(y, m, day).getTime() === hoje.getTime();
+    const evs     = byDay[day] || [];
+    const agend   = evs.filter(e => e.tipo === 'agendado');
+    const venc    = evs.filter(e => e.tipo === 'vencimento');
+
+    let evHtml = '';
+    agend.slice(0, 2).forEach(ev => {
+      evHtml += `<div style="background:var(--c-green-bg);color:var(--c-green);border-left:2px solid var(--c-green);border-radius:3px;padding:2px 5px;font-size:10px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="📅 ${esc(ev.item.cNome)}">📅 ${esc(ev.item.cNome.split(' ')[0])}</div>`;
+    });
+    venc.slice(0, 2).forEach(ev => {
+      const cat = ev.item.cat;
+      const col = cat === 'vencido' ? 'var(--c-red)' : cat === 'critico' ? 'var(--c-orange)' : 'var(--c-amber)';
+      evHtml += `<div style="background:rgba(0,0,0,.04);color:${col};border-left:2px solid ${col};border-radius:3px;padding:2px 5px;font-size:10px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="⏰ ${esc(ev.item.cNome)}">⏰ ${esc(ev.item.cNome.split(' ')[0])}</div>`;
+    });
+    const extra = evs.length - 4;
+    if (extra > 0) evHtml += `<div style="font-size:9.5px;color:var(--t4)">+${extra}</div>`;
+
+    html += `<div style="min-height:80px;background:${isToday ? 'rgba(224,123,32,.04)' : 'var(--sf)'};border:${isToday ? '1px solid var(--brand)' : 'none'};padding:6px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:${isToday ? '700' : '500'};color:${isToday ? 'var(--brand)' : 'var(--t2)'};margin-bottom:4px">${day}</div>
+      ${evHtml}
+    </div>`;
+  }
+
+  html += `</div></div>
+  <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-green-bg);border:1px solid var(--c-green);display:inline-block"></span> Exame agendado</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:rgba(160,104,0,.08);border:1px solid var(--c-amber);display:inline-block"></span> Vencimento</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-red-bg);border:1px solid var(--c-red);display:inline-block"></span> Vencimento urgente</span>
+  </div>`;
+
   $('agendaWrap').innerHTML = html;
 }
 
