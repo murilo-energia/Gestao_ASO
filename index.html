@@ -3,34 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASO — Central de Ações · Grupo Energia</title>
+<title>ASO — Grupo Energia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════════════
-   ASO — CENTRAL DE AÇÕES · v6.0
-   Redesign: uma fila de trabalho, não um dashboard.
-═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   ASO — Grupo Energia · v6.0
+   Um único princípio: o sistema mostra o que fazer, não onde clicar.
+═══════════════════════════════════════════════════════════ */
 :root{
-  --ink:#14171C; --ink-soft:#3A4150; --ink-mute:#6B7280; --ink-faint:#9AA1AC;
-  --bg:#F5F6F7; --surface:#FFFFFF; --surface-2:#FAFAFB;
-  --line:#E4E7EB; --line-2:#D3D7DD;
-  --signal:#C2540A; --signal-dim:rgba(194,84,10,.10); --signal-line:rgba(194,84,10,.28);
-  --danger:#B3261E; --danger-dim:rgba(179,38,30,.08); --danger-line:rgba(179,38,30,.22);
-  --warn:#A6740A;   --warn-dim:rgba(166,116,10,.08);   --warn-line:rgba(166,116,10,.22);
-  --ok:#1E7A46;     --ok-dim:rgba(30,122,70,.08);       --ok-line:rgba(30,122,70,.22);
-  --info:#1D5FA6;   --info-dim:rgba(29,95,166,.08);     --info-line:rgba(29,95,166,.22);
-  --purple:#6B3FA0; --purple-dim:rgba(107,63,160,.08);  --purple-line:rgba(107,63,160,.22);
-  --radius:6px; --radius-lg:10px;
-  --rail:64px;
+  --bg:#F5F6F7;
+  --sf:#FFFFFF;
+  --sf2:#FAFAFB;
+  --sf3:#EEF0F2;
+  --bd:#E1E4E8;
+  --bd2:#CBD1D7;
+
+  --t1:#14171B;
+  --t2:#4B525A;
+  --t3:#868D96;
+  --t4:#B7BCC2;
+
+  --accent:#C2540C;
+  --accent-d:#A2440A;
+  --accent-10:rgba(194,84,12,.08);
+  --accent-20:rgba(194,84,12,.16);
+
+  --red:#B3261E;      --red-bg:#FBEAE9;
+  --amber:#946200;    --amber-bg:#FBF3DE;
+  --blue:#1D4ED8;     --blue-bg:#E9EFFD;
+  --purple:#6E3FA3;   --purple-bg:#F1E9F8;
+  --green:#166B3F;    --green-bg:#E5F3EC;
+
+  --radius:8px;
+  --radius-lg:12px;
+  --sh:0 1px 2px rgba(20,23,27,.05),0 2px 8px rgba(20,23,27,.04);
+  --sh-lg:0 12px 32px rgba(20,23,27,.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-body{font-family:'Public Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:13.5px;line-height:1.5;min-height:100vh}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13.5px;line-height:1.5}
 ::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
 button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit}
 a{color:inherit;text-decoration:none}
@@ -39,187 +54,215 @@ a{color:inherit;text-decoration:none}
 /* ══ LOGIN ══════════════════════════════════════ */
 #loginWrap{display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);align-items:center;justify-content:center}
 #loginWrap.show{display:flex}
-.login-card{width:100%;max-width:360px;padding:36px 34px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg)}
-.login-mark{display:flex;align-items:center;gap:9px;margin-bottom:26px}
-.login-mark-dot{width:9px;height:9px;border-radius:2px;background:var(--signal)}
-.login-mark-txt{font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--ink-mute);text-transform:uppercase}
-.login-title{font-size:19px;font-weight:700;letter-spacing:-.3px;margin-bottom:3px}
-.login-sub{font-size:12.5px;color:var(--ink-mute);margin-bottom:22px}
-.login-err{background:var(--danger-dim);border:1px solid var(--danger-line);border-radius:var(--radius);padding:8px 11px;color:var(--danger);font-size:12px;margin-bottom:13px;display:none}
-.lf{margin-bottom:13px}
-.lf label{display:block;font-size:11px;font-weight:600;color:var(--ink-mute);margin-bottom:5px}
-.lf input{width:100%;padding:9px 11px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);font-size:13.5px;color:var(--ink)}
-.lf input:focus{outline:none;border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim)}
-.btn-login{width:100%;padding:10px;margin-top:5px;background:var(--ink);border:none;border-radius:var(--radius);color:#fff;font-size:13.5px;font-weight:600}
-.btn-login:hover{background:var(--signal)}
-.login-foot{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-faint);line-height:1.7}
+.login-card{width:100%;max-width:380px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--radius-lg);box-shadow:var(--sh-lg);padding:36px 34px}
+.login-mark{width:36px;height:36px;border-radius:8px;background:var(--t1);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;margin-bottom:18px}
+.login-title{font-size:19px;font-weight:700;letter-spacing:-.3px;color:var(--t1);margin-bottom:2px}
+.login-sub{font-size:12.5px;color:var(--t3);margin-bottom:26px}
+.login-err{background:var(--red-bg);border:1px solid rgba(179,38,30,.25);border-radius:6px;padding:9px 12px;color:var(--red);font-size:12px;margin-bottom:14px;display:none}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:11px;font-weight:600;color:var(--t3);margin-bottom:5px}
+.lf input{width:100%;padding:9px 11px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;font-size:13.5px;color:var(--t1);transition:all .13s}
+.lf input:focus{outline:none;border-color:var(--t1);background:var(--sf)}
+.btn-login{width:100%;padding:10px;margin-top:6px;background:var(--t1);border:none;border-radius:6px;color:#fff;font-size:13.5px;font-weight:600}
+.btn-login:hover{background:#000}
+.login-foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--bd);font-size:11px;color:var(--t4);line-height:1.7}
 
 /* ══ APP SHELL ══════════════════════════════════ */
 #appWrap{display:none;min-height:100vh}
 #appWrap.show{display:flex}
-.rail{width:var(--rail);flex-shrink:0;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;position:fixed;left:0;top:0;bottom:0;z-index:100;padding:14px 0}
-.rail-mark{width:30px;height:30px;border-radius:7px;background:var(--ink);color:var(--signal);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;margin-bottom:20px;flex-shrink:0}
-.rail-nav{flex:1;display:flex;flex-direction:column;gap:4px;width:100%;align-items:center}
-.rail-item{width:44px;height:44px;border-radius:var(--radius);border:none;background:none;color:var(--ink-faint);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9.5px;font-weight:600;transition:all .1s;position:relative}
-.rail-item .ico{font-size:16px;line-height:1}
-.rail-item:hover{background:var(--surface-2);color:var(--ink-soft)}
-.rail-item.active{background:var(--signal-dim);color:var(--signal)}
-.rail-badge{position:absolute;top:2px;right:6px;background:var(--danger);color:#fff;font-size:9px;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 3px}
-.rail-user{width:32px;height:32px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-soft);flex-shrink:0;cursor:pointer}
-.rail-user:hover{border-color:var(--signal);color:var(--signal)}
+.sidebar{width:196px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100}
+.sb-top{height:52px;padding:0 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.sb-mark{width:22px;height:22px;border-radius:6px;background:var(--t1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.sb-brand{font-size:12.5px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
+.sb-nav{flex:1;padding:10px 8px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;margin-bottom:2px;border-radius:6px;font-size:13px;font-weight:500;color:var(--t2);border:none;background:none;width:100%;text-align:left;transition:all .1s}
+.sb-item:hover{background:var(--sf3);color:var(--t1)}
+.sb-item.active{background:var(--t1);color:#fff;font-weight:600}
+.sb-item .ico{width:16px;text-align:center;font-size:14px;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:9px;min-width:16px;text-align:center}
+.sb-item.active .sb-badge{background:rgba(255,255,255,.25)}
+.sb-foot{padding:10px;border-top:1px solid var(--bd)}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer}
+.sb-user:hover{background:var(--sf3)}
+.sb-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--t1)}
+.sb-urole{font-size:10.5px;color:var(--t3)}
+.sb-out{margin-left:auto;font-size:12px;color:var(--t4);background:none;border:none}
+.sb-out:hover{color:var(--red)}
 
-.main{margin-left:var(--rail);flex:1;min-width:0}
-.topbar{height:52px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-title{font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+.main{margin-left:196px;flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:52px;padding:0 22px;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;flex-shrink:0}
+.topbar-title{font-size:14.5px;font-weight:700;color:var(--t1)}
 .topbar-right{display:flex;align-items:center;gap:8px}
-.sync-txt{font-size:11px;color:var(--ink-faint)}
-.pg{padding:22px 24px 56px;max-width:1080px}
+.sync{font-size:11px;color:var(--t4)}
+
+.pg{padding:22px 26px 60px;flex:1;max-width:1100px}
 .page{display:none}
 .page.active{display:block}
 
-/* ══ COMPONENTES BASE ═══════════════════════════ */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--radius);font-size:12.5px;font-weight:600;border:1px solid transparent;transition:all .1s;white-space:nowrap}
-.btn-dark{background:var(--ink);color:#fff}
-.btn-dark:hover{background:var(--signal)}
-.btn-line{background:var(--surface);color:var(--ink-soft);border-color:var(--line-2)}
-.btn-line:hover{border-color:var(--ink-soft);color:var(--ink)}
-.btn-ghost{background:none;color:var(--ink-mute)}
-.btn-ghost:hover{background:var(--surface-2);color:var(--ink)}
-.btn-danger{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-line)}
-.btn-danger:hover{background:var(--danger);color:#fff}
+/* ══ TOKENS ═════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:6px;font-size:12.5px;font-weight:600;border:1px solid transparent;transition:all .1s;white-space:nowrap;cursor:pointer}
+.btn-primary{background:var(--t1);color:#fff}
+.btn-primary:hover{background:#000}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent-d)}
+.btn-secondary{background:var(--sf);color:var(--t2);border-color:var(--bd)}
+.btn-secondary:hover{background:var(--sf3);color:var(--t1)}
+.btn-ghost{background:transparent;color:var(--t3);border-color:transparent}
+.btn-ghost:hover{background:var(--sf3);color:var(--t1)}
+.btn-danger{background:var(--red-bg);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
 .btn-sm{padding:5px 10px;font-size:11.5px}
 .btn:disabled{opacity:.4;cursor:default}
 
-.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:700}
-.bg-danger{background:var(--danger-dim);color:var(--danger)}
-.bg-warn{background:var(--warn-dim);color:var(--warn)}
-.bg-ok{background:var(--ok-dim);color:var(--ok)}
-.bg-info{background:var(--info-dim);color:var(--info)}
-.bg-purple{background:var(--purple-dim);color:var(--purple)}
-.bg-mute{background:var(--surface-2);color:var(--ink-mute);border:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:700}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-gray{background:var(--sf3);color:var(--t3)}
 
-.input{width:100%;padding:8px 10px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);font-size:13px;color:var(--ink)}
-.input:focus{outline:none;border-color:var(--signal);box-shadow:0 0 0 3px var(--signal-dim)}
-.input[readonly]{background:var(--surface-2);color:var(--ink-mute)}
+.input{width:100%;padding:8px 10px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;font-size:13px;color:var(--t1)}
+.input:focus{outline:none;border-color:var(--t1)}
 .fld{margin-bottom:12px}
-.fld label{display:block;font-size:11px;font-weight:600;color:var(--ink-mute);margin-bottom:4px}
+.fld label{display:block;font-size:11px;font-weight:600;color:var(--t3);margin-bottom:4px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg)}
-.sep{height:1px;background:var(--line)}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--radius-lg);box-shadow:var(--sh);overflow:hidden}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700;color:var(--t1)}
 
-/* ══ HOJE — FILA DE TRABALHO ════════════════════ */
-.hoje-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px}
-.hoje-title{font-size:19px;font-weight:700;letter-spacing:-.3px}
-.hoje-date{font-size:12px;color:var(--ink-faint)}
-.hoje-summary{font-size:13px;color:var(--ink-mute);margin-bottom:16px}
-.hoje-summary strong{color:var(--ink)}
+/* ══ HOJE — cabeçalho ═══════════════════════════ */
+.hoje-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.hoje-title{font-size:19px;font-weight:700;letter-spacing:-.3px;color:var(--t1)}
+.hoje-date{font-size:12.5px;color:var(--t3);margin-top:2px;text-transform:capitalize}
+.srch{padding:7px 11px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;font-size:12.5px;color:var(--t1);width:210px}
+.srch:focus{outline:none;border-color:var(--t1)}
 
-.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.srch{padding:7px 11px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);font-size:12.5px;width:210px}
-.srch:focus{outline:none;border-color:var(--signal)}
-.fsel{padding:7px 9px;border:1px solid var(--line-2);border-radius:var(--radius);background:var(--surface);font-size:12.5px;color:var(--ink-soft)}
-.bulkbar{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* Pílulas de resumo — sem gráfico, só contagem clicável */
+.pill-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:all .1s}
+.pill:hover{border-color:var(--bd2)}
+.pill.active{border-color:var(--t1);box-shadow:0 0 0 1px var(--t1)}
+.pill-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pill-n{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.pill-l{font-size:11.5px;color:var(--t3);font-weight:500}
 
-.section{margin-bottom:6px}
-.section-head{display:flex;align-items:center;gap:9px;padding:10px 2px;cursor:pointer;user-select:none}
-.section-head:hover .section-lbl{color:var(--ink)}
-.section-dash{width:3px;height:14px;border-radius:2px;flex-shrink:0}
-.section-lbl{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
-.section-n{font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px}
-.section-hint{font-size:11.5px;color:var(--ink-faint);margin-left:2px}
-.section-chev{margin-left:auto;font-size:11px;color:var(--ink-faint)}
-.section-body{display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:18px}
-.section-body.collapsed{display:none;border:none;margin-bottom:8px}
+/* Barra de seleção em lote */
+.bulkbar{display:none;align-items:center;gap:10px;background:var(--t1);color:#fff;padding:9px 14px;border-radius:8px;margin-bottom:14px}
+.bulkbar.show{display:flex}
+.bulkbar span{font-size:12.5px;font-weight:600}
+.bulkbar .btn-accent{margin-left:auto}
+.bulkbar .btn-ghost{color:rgba(255,255,255,.7)}
+.bulkbar .btn-ghost:hover{background:rgba(255,255,255,.12);color:#fff}
 
-.row{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 0;background:var(--surface);position:relative;border-bottom:1px solid var(--line)}
+/* Filas */
+.q-section{margin-bottom:18px}
+.q-head{display:flex;align-items:center;gap:8px;padding:2px 2px 9px;cursor:pointer}
+.q-head-label{font-size:11.5px;font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:.5px}
+.q-head-n{font-size:11px;font-weight:700;color:var(--t3);background:var(--sf3);padding:1px 7px;border-radius:9px}
+.q-head-hint{font-size:11.5px;color:var(--t4);margin-left:2px}
+.q-chev{margin-left:auto;font-size:11px;color:var(--t4)}
+.q-body{display:flex;flex-direction:column;gap:1px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--bd)}
+.q-body.collapsed{display:none}
+
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--sf);border-bottom:1px solid var(--bd)}
 .row:last-child{border-bottom:none}
-.row:hover{background:var(--surface-2)}
-.row-bar{width:3px;align-self:stretch;flex-shrink:0;border-radius:2px 0 0 2px}
-.row-chk{flex-shrink:0;width:15px;height:15px;accent-color:var(--signal);cursor:pointer}
-.row-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.row-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row-meta{font-size:11.5px;color:var(--ink-mute);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.row-meta .dot-sep{color:var(--ink-faint)}
-.row-side{display:flex;align-items:center;gap:16px;flex-shrink:0}
-.row-days{font-size:13px;font-weight:700;min-width:56px;text-align:right}
-.row-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.row-more{width:26px;height:26px;border-radius:5px;border:1px solid transparent;background:none;color:var(--ink-faint);display:flex;align-items:center;justify-content:center;font-size:14px}
-.row-more:hover{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.row:hover{background:var(--sf2)}
+.row-check{flex-shrink:0;width:15px;height:15px;accent-color:var(--t1);cursor:pointer}
+.row-rail{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0}
+.row-body{flex:1;min-width:0}
+.row-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-meta{font-size:11.5px;color:var(--t3);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row-meta .sep{color:var(--t4)}
+.row-days{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;min-width:64px;text-align:right;flex-shrink:0}
+.row-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
 
-.dropdown{position:absolute;top:100%;right:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,.10);z-index:200;min-width:180px;padding:4px;display:none}
-.dropdown.open{display:block}
-.dd-item{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:4px;border:none;background:none;font-size:12.5px;color:var(--ink-soft)}
-.dd-item:hover{background:var(--surface-2);color:var(--ink)}
+.empty{text-align:center;padding:26px;color:var(--t4);font-size:12.5px;background:var(--sf2)}
 
-.empty{text-align:center;padding:36px 16px;color:var(--ink-faint);font-size:13px;background:var(--surface-2);border:1px dashed var(--line-2);border-radius:var(--radius-lg)}
+/* Kebab */
+.kebab{position:relative}
+.kebab-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bd);background:var(--sf);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:14px}
+.kebab-btn:hover{background:var(--sf3);color:var(--t1)}
+.kebab-menu{display:none;position:absolute;right:0;top:30px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;box-shadow:var(--sh-lg);min-width:160px;z-index:200;overflow:hidden}
+.kebab-menu.open{display:block}
+.kebab-menu button{display:block;width:100%;text-align:left;padding:8px 12px;font-size:12.5px;color:var(--t2);background:none;border:none}
+.kebab-menu button:hover{background:var(--sf3);color:var(--t1)}
+
+/* Semana / Em dia — seções secundárias discretas */
+.week-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.week-day{flex:0 0 auto;min-width:120px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+.week-day.today{border-color:var(--t1)}
+.week-day-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.week-day-n{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--t1)}
+.week-day-sub{font-size:10.5px;color:var(--t4);margin-top:2px}
 
 /* ══ COLABORADORES ══════════════════════════════ */
-.pg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.pg-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
-.pg-sub{font-size:12px;color:var(--ink-mute);margin-top:2px}
+.tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-thead th{background:var(--surface-2);color:var(--ink-mute);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px;border-bottom:1px solid var(--line);text-align:left}
-tbody td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+thead th{background:var(--sf2);color:var(--t3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:9px 14px;border-bottom:1px solid var(--bd);white-space:nowrap;text-align:left}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--bd);font-size:13px;color:var(--t1);vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:var(--surface-2)}
-.td-mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-mute)}
-.stabs{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px}
-.stab{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:500;background:none;border:none;color:var(--ink-mute)}
-.stab.active{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+tbody tr:hover td{background:var(--sf2)}
+.td-mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t3)}
+.stab-row{display:flex;gap:2px;background:var(--sf3);border:1px solid var(--bd);border-radius:6px;padding:2px}
+.stab{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:500;background:transparent;color:var(--t3);border:none}
+.stab.active{background:var(--sf);color:var(--t1);font-weight:600;box-shadow:var(--sh)}
 
 /* ══ TIMELINE ═══════════════════════════════════ */
-.tl{padding:4px 0}
-.tl-item{display:flex;gap:12px;position:relative;padding-bottom:16px}
+.tl-item{display:flex;gap:13px;position:relative;padding-bottom:18px}
 .tl-item:last-child{padding-bottom:0}
-.tl-rail{display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0}
-.tl-dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex-shrink:0}
-.tl-line{flex:1;width:1px;background:var(--line-2);margin-top:3px}
-.tl-date{font-size:10.5px;color:var(--ink-faint);font-weight:600}
-.tl-ev{font-size:13px;font-weight:600;margin-top:1px}
-.tl-detail{font-size:11.5px;color:var(--ink-mute);margin-top:1px}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:10px;flex-shrink:0}
+.tl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-dot.ok{background:var(--green)}.tl-dot.rep{background:var(--red)}.tl-dot.curr{background:var(--accent)}
+.tl-line{flex:1;width:1px;background:var(--bd);margin-top:4px}
+.tl-date{font-size:10.5px;color:var(--t4);font-weight:500}
+.tl-event{font-size:13px;font-weight:600;color:var(--t1);margin-top:1px}
+.tl-detail{font-size:11.5px;color:var(--t3);margin-top:2px}
 
 /* ══ MODAIS ═════════════════════════════════════ */
-.overlay{display:none;position:fixed;inset:0;background:rgba(20,23,28,.42);z-index:5000;align-items:center;justify-content:center;padding:16px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(20,23,27,.4);backdrop-filter:blur(2px);z-index:5000;align-items:center;justify-content:center;padding:16px}
 .overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);width:100%;max-width:440px;box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;max-height:90vh}
-.modal-wide{max-width:600px}
-.modal-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between}
-.modal-htitle{font-size:14px;font-weight:700}
-.modal-hsub{font-size:11.5px;color:var(--ink-mute);margin-top:2px}
-.modal-close{background:none;border:none;color:var(--ink-mute);font-size:17px}
+.modal{background:var(--sf);border:1px solid var(--bd);border-radius:var(--radius-lg);width:100%;max-width:460px;box-shadow:var(--sh-lg);display:flex;flex-direction:column;max-height:90vh;animation:mUp .15s ease}
+.modal-wide{max-width:620px}
+@keyframes mUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-head-title{font-size:14px;font-weight:700;color:var(--t1)}
+.modal-head-sub{font-size:11.5px;color:var(--t3);margin-top:2px}
+.modal-close{background:none;border:none;color:var(--t3);font-size:18px;padding:0}
+.modal-close:hover{color:var(--t1)}
 .modal-body{padding:16px 18px;overflow-y:auto;flex:1}
-.modal-foot{padding:11px 18px;border-top:1px solid var(--line);display:flex;gap:7px;justify-content:flex-end}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--bd);display:flex;gap:7px;justify-content:flex-end;flex-shrink:0}
 
-.seg{display:flex;gap:6px}
-.seg-btn{flex:1;padding:8px;border:1px solid var(--line-2);border-radius:var(--radius);font-weight:600;font-size:12.5px;background:var(--surface);color:var(--ink-mute);text-align:center}
-.seg-btn.sel-ok{border-color:var(--ok);background:var(--ok-dim);color:var(--ok)}
-.seg-btn.sel-rp{border-color:var(--purple);background:var(--purple-dim);color:var(--purple)}
-.note{background:var(--info-dim);border:1px solid var(--info-line);border-radius:var(--radius);padding:8px 10px;font-size:12px;color:var(--info);margin-bottom:12px;line-height:1.5}
-.note-warn{background:var(--purple-dim);border-color:var(--purple-line);color:var(--purple)}
+.res-row{display:flex;gap:7px}
+.res-btn{flex:1;padding:9px;border:1px solid var(--bd);border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;background:var(--sf2);color:var(--t2);text-align:center}
+.res-btn.sel-ok{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.res-btn.sel-rp{border-color:var(--purple);background:var(--purple-bg);color:var(--purple)}
 .tipo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:4px}
-.tipo-btn{padding:7px 5px;border:1px solid var(--line-2);border-radius:var(--radius);font-size:11.5px;font-weight:500;background:var(--surface);color:var(--ink-mute);text-align:center}
-.tipo-btn.active{border-color:var(--signal);background:var(--signal-dim);color:var(--signal);font-weight:600}
-.checklist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius);padding:8px}
-.chk-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;font-size:12.5px}
-.chk-row:hover{background:var(--surface-2)}
+.tipo-btn{padding:7px 5px;border:1px solid var(--bd);border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;background:var(--sf2);color:var(--t2);text-align:center}
+.tipo-btn.active{border-color:var(--t1);background:var(--t1);color:#fff;font-weight:600}
+.info-note{background:var(--blue-bg);border:1px solid rgba(29,78,216,.2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--blue);margin-bottom:12px;line-height:1.5}
+.notif-list{display:flex;flex-direction:column;gap:5px;max-height:140px;overflow-y:auto;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:8px}
+.notif-list div{font-size:12.5px;color:var(--t2)}
 
 /* ══ LOADER / TOAST ═════════════════════════════ */
-#loader{display:none;position:fixed;inset:0;background:rgba(245,246,247,.85);z-index:9500;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+#loader{display:none;position:fixed;inset:0;background:rgba(245,246,247,.85);backdrop-filter:blur(4px);z-index:9500;align-items:center;justify-content:center;flex-direction:column;gap:10px}
 #loader.show{display:flex}
-.spin{width:26px;height:26px;border:2.5px solid var(--line-2);border-top-color:var(--signal);border-radius:50%;animation:spin .6s linear infinite}
+.spin{width:28px;height:28px;border:2.5px solid var(--bd2);border-top-color:var(--t1);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.load-txt{font-size:12px;color:var(--ink-mute);font-weight:500}
+.load-txt{font-size:12px;color:var(--t3);font-weight:500}
 #toastRack{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:6px}
-.toast{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius);font-size:12.5px;font-weight:500;color:#fff;max-width:320px;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:tIn .15s ease forwards,tOut .25s ease 4.5s forwards;opacity:0}
-.t-ok{background:var(--ok)}.t-err{background:var(--danger)}.t-warn{background:var(--warn)}.t-info{background:var(--info)}
+.toast{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:500;color:#fff;max-width:320px;box-shadow:var(--sh-lg);animation:tIn .15s ease forwards,tOut .25s ease 4.5s forwards;opacity:0}
+.t-ok{background:var(--green)}.t-err{background:var(--red)}.t-warn{background:var(--amber)}.t-info{background:var(--blue)}
 @keyframes tIn{to{opacity:1}}@keyframes tOut{to{opacity:0}}
 
-@media(max-width:720px){
-  .row-side{gap:8px}
-  .row-meta{display:none}
-  .srch{width:150px}
-}
+.section-title{font-size:16px;font-weight:700;color:var(--t1);letter-spacing:-.2px;margin-bottom:2px}
+.section-sub{font-size:12px;color:var(--t3);margin-bottom:16px}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.exp-b{padding:8px 7px;border:1px solid var(--bd);border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;background:var(--sf2);color:var(--t2);text-align:center}
+.exp-b.active{border-color:var(--t1);background:var(--t1);color:#fff}
 </style>
 </head>
 <body>
@@ -227,10 +270,161 @@ tbody tr:hover td{background:var(--surface-2)}
 <div id="loader"><div class="spin"></div><div class="load-txt" id="loaderTxt">Carregando...</div></div>
 <div id="toastRack"></div>
 
+<!-- ════ LOGIN ════════════════════════════════════ -->
+<div id="loginWrap">
+  <div class="login-card">
+    <div class="login-mark">◈</div>
+    <div class="login-title">ASO — Grupo Energia</div>
+    <div class="login-sub">Entre para ver o que precisa da sua atenção hoje.</div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="lf"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="lf"><label>Senha</label><input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-foot">Grupo Energia © <span id="anoLogin"></span> · Sistema interno<br>Desenvolvido por Murilo Henrique Roberto</div>
+  </div>
+</div>
+
+<!-- ════ APP ═══════════════════════════════════════ -->
+<div id="appWrap">
+  <aside class="sidebar">
+    <div class="sb-top"><div class="sb-mark">◈</div><div class="sb-brand">ASO Energia</div></div>
+    <nav class="sb-nav">
+      <button class="sb-item active" id="nav-hoje" onclick="goTo('hoje')">
+        <span class="ico">◆</span> Hoje
+        <span class="sb-badge" id="navBadge" style="display:none">0</span>
+      </button>
+      <button class="sb-item" id="nav-colaboradores" onclick="goTo('colaboradores')">
+        <span class="ico">▤</span> Colaboradores
+      </button>
+      <button class="sb-item" id="nav-configuracoes" onclick="goTo('configuracoes')">
+        <span class="ico">⚙</span> Configurações
+      </button>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user" onclick="doLogout()" title="Sair">
+        <div class="sb-av" id="sbAv">U</div>
+        <div><div class="sb-uname" id="sbName">Usuário</div><div class="sb-urole" id="sbRole">Admin</div></div>
+        <button class="sb-out">↩</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Hoje</div>
+      <div class="topbar-right">
+        <span class="sync">Atualizado <strong id="syncTime">—</strong></span>
+        <button class="btn btn-secondary btn-sm" onclick="refresh()">↻ Atualizar</button>
+        <button class="btn btn-secondary btn-sm" onclick="openExport()">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <div class="pg">
+
+      <!-- ══ HOJE ══════════════════════════════════ -->
+      <div class="page active" id="pageHoje">
+        <div class="hoje-head">
+          <div>
+            <div class="hoje-title" id="greetTitle">Bom dia</div>
+            <div class="hoje-date" id="greetDate">—</div>
+          </div>
+          <input type="text" class="srch" id="srchHoje" placeholder="Buscar colaborador..." oninput="renderHoje()">
+        </div>
+
+        <div class="pill-row" id="pillRow"></div>
+
+        <div class="bulkbar" id="bulkBar">
+          <span id="bulkCount">0 selecionados</span>
+          <button class="btn btn-ghost btn-sm" onclick="clearSel()">Limpar</button>
+          <button class="btn btn-accent btn-sm" onclick="openNotifBulk()">✉ Notificar selecionados</button>
+        </div>
+
+        <div id="filaHoje"></div>
+
+        <div style="margin-top:26px">
+          <div class="q-head" onclick="toggleSec('secSemana')">
+            <span class="q-head-label">Vencimentos desta semana</span>
+            <span class="q-chev" id="chev-secSemana">▾</span>
+          </div>
+          <div id="secSemana"><div class="week-strip" id="weekStrip"></div></div>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="q-head" onclick="toggleSec('secOk')">
+            <span class="q-head-label">Em dia</span>
+            <span class="q-head-n" id="okCount">0</span>
+            <span class="q-chev" id="chev-secOk">▸</span>
+          </div>
+          <div id="secOk" class="collapsed"></div>
+        </div>
+      </div>
+
+      <!-- ══ COLABORADORES ═════════════════════════ -->
+      <div class="page" id="pageColaboradores">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div><div class="section-title" style="margin-bottom:0">Colaboradores</div><div class="section-sub" style="margin-bottom:0">Cadastro e histórico de ASO</div></div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-secondary btn-sm" onclick="sincronizar()">⟳ Sincronizar</button>
+            <button class="btn btn-primary btn-sm" onclick="novoColab()">+ Novo colaborador</button>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--bd);flex-wrap:wrap">
+            <input type="text" class="srch" id="srchColab" placeholder="Nome, matrícula..." oninput="renderColab()">
+            <select class="input" style="width:auto;padding:7px 9px" id="filtSetorColab" onchange="renderColab()"><option value="">Todos os setores</option></select>
+            <div class="stab-row">
+              <button class="stab active" data-s="TODOS" onclick="setSitColab(this,'TODOS')">Todos</button>
+              <button class="stab" data-s="ATIVO" onclick="setSitColab(this,'ATIVO')">Ativos</button>
+              <button class="stab" data-s="INATIVO" onclick="setSitColab(this,'INATIVO')">Inativos</button>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table><thead><tr><th>Mat.</th><th>Nome</th><th>Setor</th><th>Situação</th><th>Último ASO</th><th></th></tr></thead>
+            <tbody id="tbColab"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CONFIGURAÇÕES ═════════════════════════ -->
+      <div class="page" id="pageConfiguracoes">
+        <div class="section-title">Configurações</div>
+        <div class="section-sub">Usuários e parâmetros de alerta</div>
+        <div class="g2" style="align-items:start">
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><div class="card-title">Usuários</div><button class="btn btn-primary btn-sm" onclick="novoUser()">+ Usuário</button></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th></th></tr></thead><tbody id="tbUsers"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Parâmetros</div></div>
+            <div style="padding:14px 16px">
+              <div class="g2">
+                <div class="fld"><label>Alerta amarelo (dias)</label><input type="number" class="input" id="cfgDias60" value="60" min="1"></div>
+                <div class="fld"><label>Alerta vermelho (dias)</label><input type="number" class="input" id="cfgDias30" value="30" min="1"></div>
+              </div>
+              <div class="fld"><label>E-mail RH (cópia)</label><input type="email" class="input" id="cfgEmailRH"></div>
+              <div class="fld"><label>URL do backend (GAS)</label><input type="text" class="input" id="cfgGasUrl"></div>
+              <button class="btn btn-primary btn-sm" onclick="salvarConfig()">Salvar</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="card-header"><div class="card-title">Sobre</div></div>
+          <div style="padding:14px 16px;font-size:12.5px;color:var(--t2);line-height:1.8">
+            <div><strong>Fluxo:</strong> Vencimento → (RH decide) Notificar → Marcar realizado → Registrar resultado → Ciclo renovado automaticamente.</div>
+            <div><strong>Notificações:</strong> sempre manuais — nada é enviado sem uma ação do RH.</div>
+            <div style="margin-top:8px;color:var(--t4)">v6.0 · Desenvolvido por Murilo Henrique Roberto · <span id="anoSobre"></span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
 <!-- ════ MODAIS ════════════════════════════════════ -->
 
 <div class="overlay" id="mRealizado"><div class="modal">
-  <div class="modal-head"><div><div class="modal-htitle">Marcar como realizado</div><div class="modal-hsub" id="mRealNome">—</div></div><button class="modal-close" onclick="closeModal('mRealizado')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title">Marcar exame como realizado</div><div class="modal-head-sub" id="mRealNome">—</div></div><button class="modal-close" onclick="closeModal('mRealizado')">×</button></div>
   <div class="modal-body">
     <input type="hidden" id="mRealRowId"><input type="hidden" id="mRealMat">
     <div class="g2">
@@ -247,76 +441,88 @@ tbody tr:hover td{background:var(--surface-2)}
         <div class="tipo-btn" data-tipo="Outros" onclick="selTipo(this)">Outros</div>
       </div>
     </div>
-    <div class="fld"><label>Observação</label><textarea class="input" id="mRealObs" style="min-height:52px;resize:vertical"></textarea></div>
+    <div class="fld"><label>Observação</label><textarea class="input" id="mRealObs" style="min-height:50px;resize:vertical"></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mRealizado')">Cancelar</button><button class="btn btn-dark" onclick="confirmarRealizado()">Confirmar</button></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mRealizado')">Cancelar</button><button class="btn btn-primary" onclick="confirmarRealizado()">Confirmar</button></div>
 </div></div>
 
 <div class="overlay" id="mResultado"><div class="modal">
-  <div class="modal-head"><div><div class="modal-htitle">Registrar resultado</div><div class="modal-hsub" id="mResNome">—</div></div><button class="modal-close" onclick="closeModal('mResultado')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title">Resultado da clínica</div><div class="modal-head-sub" id="mResNome">—</div></div><button class="modal-close" onclick="closeModal('mResultado')">×</button></div>
   <div class="modal-body">
     <input type="hidden" id="mResRowId"><input type="hidden" id="mResMat">
     <div class="g2">
       <div class="fld"><label>Data do laudo *</label><input type="date" class="input" id="mResData"></div>
-      <div class="fld"><label>Custo R$ (ajuste)</label><input type="number" class="input" id="mResCusto" min="0" step="0.01"></div>
+      <div class="fld"><label>Custo R$ (ajuste)</label><input type="number" class="input" id="mResCusto" min="0" step="0.01" placeholder="0,00"></div>
     </div>
     <div class="fld"><label>Resultado *</label>
-      <div class="seg"><div class="seg-btn sel-ok" id="rBtnOk" onclick="selRes('APROVADO')">Aprovado</div><div class="seg-btn" id="rBtnRp" onclick="selRes('REPROVADO')">Reprovado</div></div>
-      <div class="note note-warn" id="reprNote" style="display:none;margin-top:8px">Reprovado: o ciclo não é encerrado. Depois, use "Agendar reexame" na fila.</div>
+      <div class="res-row">
+        <div class="res-btn sel-ok" id="rBtnOk" onclick="selRes('APROVADO')">✓ Aprovado</div>
+        <div class="res-btn" id="rBtnRp" onclick="selRes('REPROVADO')">✗ Reprovado</div>
+      </div>
+      <div class="info-note" id="reprNote" style="display:none;margin-top:8px;margin-bottom:0">Reprovado: o ciclo não é encerrado. Use "Agendar reexame" na fila.</div>
     </div>
-    <div class="fld"><label>Observação</label><textarea class="input" id="mResObs" style="min-height:52px;resize:vertical"></textarea></div>
+    <div class="fld"><label>Observação</label><textarea class="input" id="mResObs" style="min-height:50px;resize:vertical"></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mResultado')">Cancelar</button><button class="btn btn-dark" onclick="confirmarResultado()">Registrar</button></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mResultado')">Cancelar</button><button class="btn btn-primary" onclick="confirmarResultado()">Registrar</button></div>
 </div></div>
 
 <div class="overlay" id="mReagendar"><div class="modal">
-  <div class="modal-head"><div><div class="modal-htitle" id="mReagTit">Reagendar</div><div class="modal-hsub" id="mReagNomeP">—</div></div><button class="modal-close" onclick="closeModal('mReagendar')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title" id="mReagTit">Reagendar</div><div class="modal-head-sub" id="mReagNomeP">—</div></div><button class="modal-close" onclick="closeModal('mReagendar')">×</button></div>
   <div class="modal-body">
     <input type="hidden" id="mReagRowId"><input type="hidden" id="mReagMat"><input type="hidden" id="mReagIsReex">
-    <div class="note" id="mReagInfo" style="display:none"></div>
+    <div class="info-note" id="mReagInfo" style="display:none"></div>
     <div class="fld"><label id="mReagDataLbl">Nova data prevista *</label><input type="date" class="input" id="mReagData"></div>
-    <div class="fld"><label>Motivo</label><textarea class="input" id="mReagObs" style="min-height:52px;resize:vertical" placeholder="Ex: colaborador não compareceu..."></textarea></div>
+    <div class="fld"><label>Motivo</label><textarea class="input" id="mReagObs" style="min-height:50px;resize:vertical" placeholder="Ex: colaborador não compareceu..."></textarea></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mReagendar')">Cancelar</button><button class="btn btn-dark" onclick="confirmarReag()">Confirmar</button></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mReagendar')">Cancelar</button><button class="btn btn-primary" onclick="confirmarReag()">Confirmar</button></div>
 </div></div>
 
-<div class="overlay" id="mNotificar"><div class="modal modal-wide">
-  <div class="modal-head"><div><div class="modal-htitle">Notificar responsável</div><div class="modal-hsub" id="mNotifCount">—</div></div><button class="modal-close" onclick="closeModal('mNotificar')">×</button></div>
+<div class="overlay" id="mNotificar"><div class="modal">
+  <div class="modal-head"><div><div class="modal-head-title">Notificar responsável</div><div class="modal-head-sub" id="mNotifNome">—</div></div><button class="modal-close" onclick="closeModal('mNotificar')">×</button></div>
   <div class="modal-body">
-    <div class="checklist" id="mNotifList"></div>
-    <div class="fld" style="margin-top:12px"><label>Mensagem (enviada para cada destinatário)</label><textarea class="input" id="mNotifMsg" style="min-height:100px;resize:vertical"></textarea></div>
-    <div style="font-size:11.5px;color:var(--ink-mute)">Nenhum e-mail é enviado automaticamente pelo sistema — este envio acontece apenas agora, por sua ação. Uma cópia vai para o RH.</div>
+    <input type="hidden" id="mNotifRowId"><input type="hidden" id="mNotifMat">
+    <div id="mNotifDestWrap" class="fld"><label>E-mail do responsável *</label><input type="email" class="input" id="mNotifDest" placeholder="responsavel@empresa.com.br"></div>
+    <div id="mNotifListWrap" style="display:none" class="fld"><label>Destinatários (<span id="mNotifListN">0</span>)</label><div class="notif-list" id="mNotifList"></div></div>
+    <div class="fld"><label>Mensagem</label><textarea class="input" id="mNotifMsg" style="min-height:100px;resize:vertical"></textarea></div>
+    <div style="font-size:11.5px;color:var(--t3);margin-top:-6px">Uma cópia será enviada para o RH. Nada é enviado automaticamente — este clique é a única forma de notificar.</div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mNotificar')">Cancelar</button><button class="btn btn-dark" id="mNotifBtn" onclick="confirmarNotifLote()">Enviar</button></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mNotificar')">Cancelar</button><button class="btn btn-accent" onclick="confirmarNotif()">✉ Enviar</button></div>
 </div></div>
 
 <div class="overlay" id="mTimeline"><div class="modal modal-wide">
-  <div class="modal-head"><div><div class="modal-htitle" id="mTlNome">Histórico</div><div class="modal-hsub" id="mTlSub">—</div></div><button class="modal-close" onclick="closeModal('mTimeline')">×</button></div>
-  <div class="modal-body"><div class="tl" id="tlContent"></div></div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mTimeline')">Fechar</button></div>
+  <div class="modal-head"><div><div class="modal-head-title" id="mTlNome">Histórico</div><div class="modal-head-sub" id="mTlSub">—</div></div><button class="modal-close" onclick="closeModal('mTimeline')">×</button></div>
+  <div class="modal-body" id="mTlBody"><div id="tlContent"></div></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mTimeline')">Fechar</button></div>
 </div></div>
 
 <div class="overlay" id="mColab"><div class="modal">
-  <div class="modal-head"><div><div class="modal-htitle" id="mColabTit">Novo colaborador</div></div><button class="modal-close" onclick="closeModal('mColab')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title" id="mColabTit">Novo colaborador</div></div><button class="modal-close" onclick="closeModal('mColab')">×</button></div>
   <div class="modal-body">
     <input type="hidden" id="mColabModo">
-    <div class="g2"><div class="fld"><label>Matrícula *</label><input type="text" class="input" id="mColabMat"></div><div class="fld"><label>Setor</label><input type="text" class="input" id="mColabSet"></div></div>
-    <div class="fld"><label>Nome completo *</label><input type="text" class="input" id="mColabNom"></div>
-    <div class="g2"><div class="fld"><label>E-mail responsável</label><input type="email" class="input" id="mColabEma"></div><div class="fld"><label>CPF</label><input type="text" class="input" id="mColabCpf"></div></div>
     <div class="g2">
+      <div class="fld"><label>Matrícula *</label><input type="text" class="input" id="mColabMat"></div>
+      <div class="fld"><label>Setor</label><input type="text" class="input" id="mColabSet"></div>
+    </div>
+    <div class="fld"><label>Nome completo *</label><input type="text" class="input" id="mColabNom"></div>
+    <div class="g2">
+      <div class="fld"><label>E-mail responsável</label><input type="email" class="input" id="mColabEma"></div>
+      <div class="fld"><label>CPF</label><input type="text" class="input" id="mColabCpf"></div>
+    </div>
+    <div class="g3">
       <div class="fld"><label>Admissão</label><input type="date" class="input" id="mColabAdm"></div>
       <div class="fld"><label>Último ASO</label><input type="date" class="input" id="mColabAso"></div>
+      <div class="fld"><label>Situação</label><select class="input" id="mColabSit"><option value="ATIVO">ATIVO</option><option value="INATIVO">INATIVO</option></select></div>
     </div>
-    <div class="fld"><label>Situação</label><select class="input" id="mColabSit"><option value="ATIVO">ATIVO</option><option value="INATIVO">INATIVO</option></select></div>
   </div>
   <div class="modal-foot">
     <button class="btn btn-danger btn-sm" id="mColabExcBtn" onclick="excluirColab()" style="margin-right:auto;display:none">Excluir</button>
-    <button class="btn btn-line" onclick="closeModal('mColab')">Cancelar</button><button class="btn btn-dark" onclick="salvarColab()">Salvar</button>
+    <button class="btn btn-secondary" onclick="closeModal('mColab')">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarColab()">Salvar</button>
   </div>
 </div></div>
 
 <div class="overlay" id="mUser"><div class="modal" style="max-width:380px">
-  <div class="modal-head"><div><div class="modal-htitle" id="mUserTit">Novo usuário</div></div><button class="modal-close" onclick="closeModal('mUser')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title" id="mUserTit">Novo usuário</div></div><button class="modal-close" onclick="closeModal('mUser')">×</button></div>
   <div class="modal-body">
     <input type="hidden" id="mUserIdx">
     <div class="fld"><label>Nome *</label><input type="text" class="input" id="mUserNome"></div>
@@ -324,148 +530,43 @@ tbody tr:hover td{background:var(--surface-2)}
     <div class="fld"><label>Senha *</label><input type="password" class="input" id="mUserSenha" placeholder="Mínimo 6 caracteres"></div>
     <div class="fld"><label>Perfil</label><select class="input" id="mUserPerfil"><option value="ADMIN">Administrador</option><option value="VISUALIZADOR">Visualizador</option></select></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mUser')">Cancelar</button><button class="btn btn-dark" onclick="salvarUser()">Salvar</button></div>
+  <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal('mUser')">Cancelar</button><button class="btn btn-primary" onclick="salvarUser()">Salvar</button></div>
 </div></div>
 
 <div class="overlay" id="mExport"><div class="modal" style="max-width:400px">
-  <div class="modal-head"><div><div class="modal-htitle">Exportar</div></div><button class="modal-close" onclick="closeModal('mExport')">×</button></div>
+  <div class="modal-head"><div><div class="modal-head-title">Exportar dados</div></div><button class="modal-close" onclick="closeModal('mExport')">×</button></div>
   <div class="modal-body">
-    <div class="fld"><label>Recorte</label>
-      <select class="input" id="expTipoSel">
-        <option value="todos">Todos os registros ativos</option>
-        <option value="realizados">Realizados</option>
-        <option value="pendentes">Pendentes</option>
-        <option value="reprovados">Reprovados</option>
-      </select>
+    <div class="fld"><label>Tipo</label>
+      <div class="exp-grid">
+        <div class="exp-b active" data-et="todos" onclick="setET(this,'todos')">Todos</div>
+        <div class="exp-b" data-et="realizados" onclick="setET(this,'realizados')">Realizados</div>
+        <div class="exp-b" data-et="pendentes" onclick="setET(this,'pendentes')">Pendentes</div>
+        <div class="exp-b" data-et="reprovados" onclick="setET(this,'reprovados')">Reprovados</div>
+      </div>
     </div>
-    <div class="g2"><div class="fld"><label>De</label><input type="date" class="input" id="expDe"></div><div class="fld"><label>Até</label><input type="date" class="input" id="expAte"></div></div>
   </div>
-  <div class="modal-foot"><button class="btn btn-line" onclick="closeModal('mExport')">Cancelar</button><button class="btn btn-dark" onclick="exportXLSX()">Baixar Excel</button></div>
+  <div class="modal-foot">
+    <button class="btn btn-secondary" onclick="closeModal('mExport')">Cancelar</button>
+    <button class="btn" style="background:var(--green);color:#fff" onclick="exportXLSX()">⬇ Excel</button>
+    <button class="btn" style="background:var(--red);color:#fff" onclick="exportPDF()">⬇ PDF</button>
+  </div>
 </div></div>
 
 <div class="overlay" id="mObs"><div class="modal" style="max-width:380px">
-  <div class="modal-head"><div><div class="modal-htitle">Observação</div></div><button class="modal-close" onclick="closeModal('mObs')">×</button></div>
-  <div class="modal-body"><div class="fld"><label>Colaborador</label><input type="text" class="input" id="mObsNome" readonly></div><div class="fld"><label>Nota</label><textarea class="input" id="mObsTxt" style="min-height:80px" readonly></textarea></div></div>
-  <div class="modal-foot"><button class="btn btn-dark" onclick="closeModal('mObs')">Fechar</button></div>
+  <div class="modal-head"><div><div class="modal-head-title">Observação</div></div><button class="modal-close" onclick="closeModal('mObs')">×</button></div>
+  <div class="modal-body">
+    <div class="fld"><label>Colaborador</label><input type="text" class="input" id="mObsNome" readonly></div>
+    <div class="fld"><label>Observação</label><textarea class="input" id="mObsTxt" style="min-height:70px" readonly></textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('mObs')">Fechar</button></div>
 </div></div>
-
-<!-- ════ LOGIN ════════════════════════════════════ -->
-<div id="loginWrap"><div class="login-card">
-  <div class="login-mark"><span class="login-mark-dot"></span><span class="login-mark-txt">Grupo Energia</span></div>
-  <div class="login-title">Central de Ações — ASO</div>
-  <div class="login-sub">Entre para ver o que precisa de atenção hoje.</div>
-  <div class="login-err" id="loginErr"></div>
-  <div class="lf"><label>E-mail</label><input type="email" id="loginEmail" autocomplete="email"></div>
-  <div class="lf"><label>Senha</label><input type="password" id="loginSenha" autocomplete="current-password"></div>
-  <button class="btn-login" onclick="doLogin()">Entrar</button>
-  <div class="login-foot">Grupo Energia © <span id="anoLogin"></span> · Sistema interno<br>Desenvolvido por Murilo Henrique Roberto</div>
-</div></div>
-
-<!-- ════ APP ══════════════════════════════════════ -->
-<div id="appWrap">
-  <aside class="rail">
-    <div class="rail-mark">◈</div>
-    <nav class="rail-nav">
-      <button class="rail-item active" id="nav-hoje" onclick="goTo('hoje')"><span class="ico">▣</span>Hoje<span class="rail-badge" id="navBadge" style="display:none">0</span></button>
-      <button class="rail-item" id="nav-colaboradores" onclick="goTo('colaboradores')"><span class="ico">◫</span>Time</button>
-      <button class="rail-item" id="nav-configuracoes" onclick="goTo('configuracoes')"><span class="ico">⚙</span>Config</button>
-    </nav>
-    <div class="rail-user" id="railUser" onclick="doLogout()" title="Sair">U</div>
-  </aside>
-
-  <main class="main">
-    <div class="topbar">
-      <div class="topbar-title" id="topbarTitle">Hoje</div>
-      <div class="topbar-right">
-        <span class="sync-txt">Atualizado <strong id="syncTime">—</strong></span>
-        <button class="btn btn-ghost btn-sm" id="btnRefresh" onclick="refresh()">↻</button>
-        <button class="btn btn-line btn-sm" onclick="openExport()">Exportar</button>
-      </div>
-    </div>
-
-    <div class="pg">
-      <!-- ══ HOJE ══════════════════════════════════ -->
-      <div class="page active" id="pageHoje">
-        <div class="hoje-head">
-          <div class="hoje-title" id="greetingTitle">Bom dia</div>
-          <div class="hoje-date" id="hojeDate">—</div>
-        </div>
-        <div class="hoje-summary" id="hojeSummary">Carregando sua fila de trabalho...</div>
-
-        <div class="toolbar">
-          <input type="text" class="srch" id="srchPainel" placeholder="Buscar por nome, matrícula..." oninput="renderFila()">
-          <select class="fsel" id="filtSetor" onchange="renderFila()"><option value="">Todos os setores</option></select>
-          <div class="bulkbar">
-            <span class="sync-txt" id="selCount" style="display:none">0 selecionados</span>
-            <button class="btn btn-line btn-sm" id="btnNotifLote" style="display:none" onclick="openNotifLote()">Notificar selecionados</button>
-          </div>
-        </div>
-
-        <div id="filaWrap"></div>
-      </div>
-
-      <!-- ══ COLABORADORES ═══════════════════════════ -->
-      <div class="page" id="pageColaboradores">
-        <div class="pg-head">
-          <div><div class="pg-title">Colaboradores</div><div class="pg-sub">Cadastro e histórico de ASO</div></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-line btn-sm" onclick="sincronizar()">Sincronizar ciclos</button>
-            <button class="btn btn-dark btn-sm" onclick="novoColab()">+ Novo</button>
-          </div>
-        </div>
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap">
-            <input type="text" class="srch" id="srchColab" placeholder="Nome, matrícula..." oninput="renderColab()">
-            <select class="fsel" id="filtSetorColab" onchange="renderColab()"><option value="">Todos os setores</option></select>
-            <div class="stabs">
-              <button class="stab active" data-s="TODOS" onclick="setSitColab(this,'TODOS')">Todos</button>
-              <button class="stab" data-s="ATIVO" onclick="setSitColab(this,'ATIVO')">Ativos</button>
-              <button class="stab" data-s="INATIVO" onclick="setSitColab(this,'INATIVO')">Inativos</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto"><table style="min-width:620px">
-            <thead><tr><th>Mat.</th><th>Nome</th><th>Setor</th><th>E-mail</th><th>Situação</th><th>Último ASO</th><th></th></tr></thead>
-            <tbody id="tbColab"></tbody>
-          </table></div>
-        </div>
-      </div>
-
-      <!-- ══ CONFIGURAÇÕES ════════════════════════════ -->
-      <div class="page" id="pageConfiguracoes">
-        <div class="pg-head"><div><div class="pg-title">Configurações</div><div class="pg-sub">Usuários e parâmetros de alerta</div></div></div>
-        <div class="g2" style="align-items:start">
-          <div class="card" style="margin-bottom:14px">
-            <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
-              <div style="font-weight:700;font-size:13px">Usuários</div><button class="btn btn-dark btn-sm" onclick="novoUser()">+ Usuário</button>
-            </div>
-            <table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th></th></tr></thead><tbody id="tbUsers"></tbody></table>
-          </div>
-          <div class="card">
-            <div style="padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px">Parâmetros de alerta</div>
-            <div style="padding:14px">
-              <div class="g2">
-                <div class="fld"><label>Alerta amarelo (dias)</label><input type="number" class="input" id="cfgDias60" value="60" min="1"></div>
-                <div class="fld"><label>Alerta vermelho (dias)</label><input type="number" class="input" id="cfgDias30" value="30" min="1"></div>
-              </div>
-              <div class="fld"><label>E-mail RH (cópia)</label><input type="email" class="input" id="cfgEmailRH"></div>
-              <div class="fld"><label>URL do backend (GAS)</label><input type="text" class="input" id="cfgGasUrl"></div>
-              <button class="btn btn-dark btn-sm" onclick="salvarConfig()">Salvar</button>
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:14px;font-size:11.5px;color:var(--ink-faint)">ASO — Central de Ações · v6.0 · Grupo Energia · Desenvolvido por Murilo Henrique Roberto</div>
-      </div>
-    </div>
-  </main>
-</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   ASO — CENTRAL DE AÇÕES — v6.0
-   Regra de negócio de vencimentos preservada integralmente.
-   Notificações: 100% manuais, sem automação em segundo plano.
+   ASO — Grupo Energia · v6.0
+   Camada de dados preservada (regra de negócio validada).
+   Camada de interface totalmente reprojetada.
 ═══════════════════════════════════════════════════════════ */
-
 let CFG = {
   CSV_BASE: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRazF-ym2uPpNBYkJ5Pg-hOU04lAPrPxUGbWgGKfChHpkkmdroK2ToAYAp21YKEK9M9hxxHl9knsIf2/pub',
   GID_COLAB:  '0',
@@ -479,163 +580,153 @@ let CFG = {
 
 const S = {
   colab: [], gestao: [], users: [], sess: null,
-  sitColab: 'TODOS', mTipo: 'Periódico', mRes: 'APROVADO',
-  view: 'hoje', collapsed: {}, selecionados: new Set(),
+  filtro: 'acao', sitColab: 'TODOS', mTipo: 'Periódico', mRes: 'APROVADO',
+  expTipo: 'todos', view: 'hoje', sel: new Set(),
 };
 
-const $   = id => document.getElementById(id);
-const esc = s  => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const val = id => $(id)?.value?.trim() ?? '';
 const isAdmin = () => (S.sess?.perfil || '').toUpperCase() === 'ADMIN';
 
-function L(v, txt='Carregando...'){ $('loader').classList.toggle('show', v); if(txt) $('loaderTxt').textContent = txt; }
-function toast(msg, type='info'){
+function L(v, txt = 'Carregando...') { $('loader').classList.toggle('show', v); if (txt) $('loaderTxt').textContent = txt; }
+function toast(msg, type = 'info') {
   const icons = { ok:'✓', err:'✕', warn:'⚠', info:'ℹ' };
   const el = document.createElement('div');
   el.className = `toast t-${type}`;
   el.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${esc(msg)}</span>`;
   $('toastRack').appendChild(el);
-  setTimeout(()=>{ el.style.animation='tOut .25s ease forwards'; setTimeout(()=>el.remove(),260); }, 4500);
+  setTimeout(() => { el.style.animation = 'tOut .25s ease forwards'; setTimeout(() => el.remove(), 280); }, 4500);
 }
-function toastSrv(msg){
-  if(!msg) return;
-  if(msg.startsWith('✅')) toast(msg.slice(2).trim(),'ok');
-  else if(msg.startsWith('❌')) toast(msg.slice(2).trim(),'err');
-  else if(msg.startsWith('⚠️')) toast(msg.slice(3).trim(),'warn');
-  else toast(msg,'info');
+function toastSrv(msg) {
+  if (!msg) return;
+  if (msg.startsWith('✅')) toast(msg.slice(2).trim(), 'ok');
+  else if (msg.startsWith('❌')) toast(msg.slice(2).trim(), 'err');
+  else if (msg.startsWith('⚠️')) toast(msg.slice(3).trim(), 'warn');
+  else toast(msg, 'info');
 }
 
-/* ── Datas (regra de negócio preservada) ─────────────── */
-function parseDate(v){
+function parseDate(v) {
   if (v instanceof Date && !isNaN(v)) return v;
   if (!v) return null;
   const s = String(v).trim();
-  if (!s || s==='-' || s==='—') return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d,12); }
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){ const p=s.split('/').map(Number); return new Date(p[2],p[1]-1,p[0],12); }
+  if (!s || s === '-' || s === '—') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d,12); }
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) { const p = s.split('/').map(Number); return new Date(p[2],p[1]-1,p[0],12); }
   const dt = new Date(s); return isNaN(dt.getTime()) ? null : dt;
 }
-const fmtD  = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '—';
+const fmtD = d => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}` : '—';
 const fmtDT = d => d ? fmtD(d) + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') : '—';
-const fmtM  = v => Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
-const addMs = (d,ms) => new Date(d.getTime()+ms);
+const fmtM = v => Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+const isoD = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : '';
+const addMs = (d, ms) => new Date(d.getTime() + ms);
 const DAY = 86400000;
-function midnight(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
-function isoD(d){ return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : ''; }
-function setSync(id){ const el=$(id); if(el) el.textContent = fmtDT(new Date()); }
+function midnight() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function setSync(id) { const el = $(id); if (el) el.textContent = fmtDT(new Date()); }
 
-/* ── CSV ──────────────────────────────────────────────── */
-function parseLine(line){
-  const r=[]; let cur='', inQ=false;
-  for(let i=0;i<line.length;i++){ const c=line[i];
-    if(c==='"') inQ=!inQ;
-    else if(c===',' && !inQ){ r.push(cur); cur=''; }
-    else cur+=c;
-  }
+/* ── CSV ─────────────────────────────────────────────── */
+function parseLine(line) {
+  const r = []; let cur = '', inQ = false;
+  for (let i=0;i<line.length;i++){ const c=line[i];
+    if (c==='"') inQ=!inQ; else if (c===',' && !inQ) { r.push(cur); cur=''; } else cur+=c; }
   r.push(cur); return r;
 }
-function parseCSV(text){
+function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2) return [];
+  if (lines.length<2) return [];
   const hdrs = parseLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
-  return lines.slice(1).map(line=>{
-    const vals=parseLine(line); const obj={};
+  return lines.slice(1).map(line => {
+    const vals = parseLine(line); const obj = {};
     hdrs.forEach((h,i)=>{ obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim(); });
     return obj;
   });
 }
-async function fetchCSV(gid){
+async function fetchCSV(gid) {
   const url = `${CFG.CSV_BASE}?gid=${gid}&single=true&output=csv&t=${Date.now()}`;
-  const res = await fetch(url,{cache:'no-store'});
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await fetch(url, { cache:'no-store' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return parseCSV(await res.text());
 }
 
-/* ── Sessão ───────────────────────────────────────────── */
-function saveSession(u){ localStorage.setItem(CFG.SESS_KEY, JSON.stringify({u,ts:Date.now()})); }
-function clearSession(){ localStorage.removeItem(CFG.SESS_KEY); }
-function loadSession(){
-  try{ const raw=localStorage.getItem(CFG.SESS_KEY); if(!raw) return null;
-    const s=JSON.parse(raw); if(Date.now()-s.ts>CFG.SESS_TTL){ clearSession(); return null; } return s.u;
-  }catch(e){ return null; }
+/* ── Sessão ──────────────────────────────────────────── */
+function saveSession(u) { localStorage.setItem(CFG.SESS_KEY, JSON.stringify({ u, ts:Date.now() })); }
+function clearSession() { localStorage.removeItem(CFG.SESS_KEY); }
+function loadSession() {
+  try { const raw = localStorage.getItem(CFG.SESS_KEY); if (!raw) return null;
+    const s = JSON.parse(raw); if (Date.now()-s.ts > CFG.SESS_TTL) { clearSession(); return null; }
+    return s.u; } catch(e) { return null; }
 }
-
-async function doLogin(){
-  const email = val('loginEmail').toLowerCase(), senha = val('loginSenha');
-  if(!email||!senha){ showLErr('Preencha e-mail e senha.'); return; }
-  L(true,'Verificando...');
-  try{
+async function doLogin() {
+  const email = val('loginEmail').toLowerCase().trim(); const senha = val('loginSenha');
+  if (!email || !senha) { showLErr('Preencha e-mail e senha.'); return; }
+  L(true, 'Verificando...');
+  try {
     const users = await fetchCSV(CFG.GID_USERS);
     const u = users.find(r => (r.EMAIL||r.email||'').toLowerCase().trim()===email && (r.SENHA||r.senha||'').trim()===senha);
     L(false);
-    if(!u){ showLErr('E-mail ou senha incorretos.'); return; }
+    if (!u) { showLErr('E-mail ou senha incorretos.'); return; }
     const sess = { nome:u.NOME||u.nome||email, email, perfil:(u.PERFIL||u.perfil||'VISUALIZADOR').toUpperCase() };
     S.sess = sess; saveSession(sess); enterApp(sess);
-  }catch(e){ L(false); showLErr('Erro de conexão.'); }
+  } catch(e) { L(false); showLErr('Erro de conexão. Verifique a internet.'); }
 }
-function showLErr(m){ const el=$('loginErr'); el.textContent=m; el.style.display='block'; }
-$('loginSenha').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-$('loginEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginSenha').focus(); });
+function showLErr(m) { const el=$('loginErr'); el.textContent=m; el.style.display='block'; }
+$('loginSenha').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+$('loginEmail').addEventListener('keydown', e => { if (e.key==='Enter') $('loginSenha').focus(); });
 
-function enterApp(sess){
+function enterApp(sess) {
   $('loginWrap').classList.remove('show'); $('appWrap').classList.add('show');
-  $('railUser').textContent = (sess.nome||'U').charAt(0).toUpperCase();
-  $('railUser').title = sess.nome + ' — clique para sair';
-  const navConf = $('nav-configuracoes'); if(navConf) navConf.style.display = isAdmin() ? '' : 'none';
+  $('sbAv').textContent = (sess.nome||'U').charAt(0).toUpperCase();
+  $('sbName').textContent = (sess.nome||'').split(' ')[0];
+  $('sbRole').textContent = sess.perfil==='ADMIN' ? 'Administrador' : 'Visualizador';
+  const navConf = $('nav-configuracoes'); if (navConf) navConf.style.display = isAdmin() ? '' : 'none';
   loadAll();
 }
-function doLogout(){
-  if(!confirm('Sair do sistema?')) return;
-  clearSession(); S.sess=null;
+function doLogout() {
+  if (!confirm('Sair do sistema?')) return;
+  clearSession(); S.sess = null;
   $('appWrap').classList.remove('show'); $('loginWrap').classList.add('show');
   $('loginEmail').value=''; $('loginSenha').value=''; $('loginErr').style.display='none';
 }
 
-/* ── GAS ──────────────────────────────────────────────── */
-async function gasPost(acao, dados){
-  const res = await fetch(CFG.GAS_URL,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({acao,...dados}), redirect:'follow' });
-  try{ const d=JSON.parse(await res.text()); return d.msg || '✅ OK'; }catch{ return '✅ Ação registrada.'; }
+/* ── GAS ─────────────────────────────────────────────── */
+async function gasPost(acao, dados) {
+  const res = await fetch(CFG.GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({acao,...dados}), redirect:'follow' });
+  try { const d = JSON.parse(await res.text()); return d.msg || '✅ OK'; } catch { return '✅ Ação registrada.'; }
 }
-function gasSave(acao, dados){
-  gasPost(acao, dados).then(msg=>{ if(msg && !msg.startsWith('✅')) toastSrv(msg); }).catch(()=>toast('Erro ao salvar — clique ↻','err'));
+function gasSave(acao, dados) {
+  gasPost(acao, dados).then(msg => { if (msg && !msg.startsWith('✅')) toastSrv(msg); })
+    .catch(() => toast('Erro ao salvar — clique ↻ para verificar', 'err'));
 }
 
-/* ── Carregamento ─────────────────────────────────────── */
-async function loadAll(){
-  const btn=$('btnRefresh'); if(btn) btn.style.opacity='.5';
-  try{
-    const [rawC, rawG] = await Promise.all([ fetchCSV(CFG.GID_COLAB), fetchCSV(CFG.GID_GESTAO) ]);
+/* ── Carregamento ────────────────────────────────────── */
+async function loadAll() {
+  try {
+    const [rawC, rawG] = await Promise.all([fetchCSV(CFG.GID_COLAB), fetchCSV(CFG.GID_GESTAO)]);
     S.colab = rawC.map(normColab).filter(r=>r.mat);
     S.gestao = rawG.map((r,i)=>normGestao(r,i)).filter(r=>r.mat);
-    buildSetorFilter(); setSync('syncTime'); renderView(); updateBadge(); setGreeting();
-  }catch(e){ toast('Erro ao carregar: '+e.message,'err'); }
-  finally{ if(btn) btn.style.opacity='1'; }
+    buildSetorFilter(); setSync('syncTime'); renderView(); updateBadge();
+  } catch(e) { toast('Erro ao carregar: ' + e.message, 'err'); }
 }
-async function refresh(){ await loadAll(); toast('Dados atualizados','ok'); }
+async function refresh() { S.sel.clear(); await loadAll(); toast('Dados atualizados', 'ok'); }
 
-function normColab(r){
-  return {
-    mat: String(r.MATRICULA||'').trim(), nome: r['NOME DO COLABORADOR']||r.NOME||r.nome||'',
-    cpf: r.CPF||r.cpf||'', setor: r.SETOR||r.setor||'',
-    adm: parseDate(r['DATA DE ADMISSÃO']||r.DATA_ADMISSAO||''), aso: parseDate(r['DATA ULTIMO ASO']||r.DATA_ULTIMO_ASO||''),
-    sit: (r['SITUAÇÃO']||r.SITUACAO||r.sit||'ATIVO').toUpperCase(), email: r['E-MAIL DO RESPONSÁVEL']||r.EMAIL||r.email||'',
-  };
+function normColab(r) {
+  return { mat:String(r.MATRICULA||'').trim(), nome:r['NOME DO COLABORADOR']||r.NOME||r.nome||'',
+    cpf:r.CPF||r.cpf||'', setor:r.SETOR||r.setor||'',
+    adm:parseDate(r['DATA DE ADMISSÃO']||r.DATA_ADMISSAO||''), aso:parseDate(r['DATA ULTIMO ASO']||r.DATA_ULTIMO_ASO||''),
+    sit:(r['SITUAÇÃO']||r.SITUACAO||r.sit||'ATIVO').toUpperCase(), email:r['E-MAIL DO RESPONSÁVEL']||r.EMAIL||r.email||'' };
 }
-function normGestao(r, i){
-  let dataExame = parseDate(r.DATA_EXAME||r['DATA EXAME']||'');
-  let validade  = parseDate(r.VALIDADE_ASO||r['VALIDADE ASO']||'');
+function normGestao(r, i) {
+  let dataExame = parseDate(r.DATA_EXAME||r['DATA EXAME']||''); let validade = parseDate(r.VALIDADE_ASO||r['VALIDADE ASO']||'');
   if (dataExame && !validade) validade = addMs(dataExame, 365*DAY);
-  return {
-    rowIdx: i+2, mat: String(r.MATRICULA||r.MAT||'').trim(), nome:r.NOME||r.nome||'', cpf:r.CPF||r.cpf||'', setor:r.SETOR||r.setor||'',
+  return { rowIdx:i+2, mat:String(r.MATRICULA||r.MAT||'').trim(), nome:r.NOME||r.nome||'', cpf:r.CPF||r.cpf||'', setor:r.SETOR||r.setor||'',
     dataExame, validade, status:(r.STATUS||r.status||'PENDENTE').toUpperCase(), situacao:r.SITUACAO||r.situacao||'',
     tipo:r.TIPO||r.tipo||'Periódico', custo:Number(r.CUSTO||r.custo||0), email:r.EMAIL||r.email||'',
-    dataResp: parseDate(r.DATA_RESPOSTA||r.data_resposta||''), retorno: parseDate(r.DATA_RETORNO||r.data_retorno||''),
-    reagend: Number(r.REAGENDAMENTOS||r.reagendamentos||0), obs: r.OBSERVACAO||r.obs||'',
-  };
+    statusNotif:r.STATUS_NOTIF||r.status_notif||'Não Enviada', statusResp:r.STATUS_RESPOSTA||r.status_resposta||'',
+    dataResp:parseDate(r.DATA_RESPOSTA||r.data_resposta||''), retorno:parseDate(r.DATA_RETORNO||r.data_retorno||''),
+    reagend:Number(r.REAGENDAMENTOS||r.reagendamentos||0), obs:r.OBSERVACAO||r.obs||'' };
 }
 
-/* ── Categorização (regra preservada) ────────────────── */
-function categorize(g){
+function categorize(g) {
   const { status, validade, retorno } = g;
   if (status==='INATIVO') return 'encerrado';
   if (retorno && status!=='REPROVADO') return 'encerrado';
@@ -643,501 +734,544 @@ function categorize(g){
   if (status==='REALIZADO' && !retorno) return 'laudo';
   if (!validade) return 'sem_hist';
   const dias = diasR(g);
-  if (dias < 0) return 'vencido';
-  if (dias <= CFG.DIAS_30) return 'critico';
-  if (dias <= CFG.DIAS_60) return 'alerta';
+  if (dias<0) return 'vencido';
+  if (dias<=CFG.DIAS_30) return 'critico';
+  if (dias<=CFG.DIAS_60) return 'alerta';
   return 'ok';
 }
-function diasR(g){ if(!g.validade) return null; return Math.ceil((g.validade - midnight())/DAY); }
+function diasR(g) { if (!g.validade) return null; return Math.ceil((g.validade - midnight())/DAY); }
 
-function getItens(){
+function getItens() {
   const cm = {}; S.colab.forEach(c => cm[c.mat]=c);
   return S.gestao.map((g,i) => {
     const c = cm[g.mat] || {};
     let { dataExame, validade } = g;
-    if (!validade && c.aso){ dataExame = dataExame || c.aso; validade = addMs(c.aso, 365*DAY); }
-    const item = { ...g, dataExame, validade, rowIdx:i+2, cNome:c.nome||g.nome, cSetor:c.setor||g.setor, cSit:c.sit||'ATIVO', cEmail:c.email||g.email };
+    if (!validade && c.aso) { dataExame = dataExame || c.aso; validade = addMs(c.aso, 365*DAY); }
+    const item = { ...g, dataExame, validade, rowIdx:i+2,
+      cNome:c.nome||g.nome, cSetor:c.setor||g.setor, cSit:c.sit||'ATIVO', cEmail:c.email||g.email };
     item.cat = categorize(item);
     return item;
   }).filter(g => g.cSit!=='INATIVO' && g.cat!=='encerrado');
 }
 
-/* ── Navegação ────────────────────────────────────────── */
-const TITLES = { hoje:'Hoje', colaboradores:'Colaboradores', configuracoes:'Configurações' };
-function goTo(v){
-  if (v==='configuracoes' && !isAdmin()){ toast('Acesso restrito.','warn'); return; }
+/* ── Navegação ───────────────────────────────────────── */
+const PAGE_TITLES = { hoje:'Hoje', colaboradores:'Colaboradores', configuracoes:'Configurações' };
+function goTo(v) {
+  if (v==='configuracoes' && !isAdmin()) { toast('Acesso restrito.','warn'); return; }
   S.view = v;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.rail-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
   $('page'+v.charAt(0).toUpperCase()+v.slice(1))?.classList.add('active');
   $('nav-'+v)?.classList.add('active');
-  const tt=$('topbarTitle'); if(tt) tt.textContent = TITLES[v]||v;
+  $('topbarTitle').textContent = PAGE_TITLES[v]||v;
   renderView();
 }
-function renderView(){
-  if (S.view==='hoje') renderFila();
+function renderView() {
+  if (S.view==='hoje') renderHoje();
   if (S.view==='colaboradores') renderColab();
   if (S.view==='configuracoes' && isAdmin()) renderUsers();
 }
-function buildSetorFilter(){
+function buildSetorFilter() {
   const setores = [...new Set(S.colab.map(c=>c.setor).filter(Boolean))].sort();
-  ['filtSetor','filtSetorColab'].forEach(id=>{
-    const sel=$(id); if(!sel) return; const cur=sel.value;
-    sel.innerHTML='<option value="">Todos os setores</option>';
-    setores.forEach(s=>{ const o=document.createElement('option'); o.value=o.textContent=s; sel.appendChild(o); });
-    if(cur) sel.value=cur;
-  });
+  const sel = $('filtSetorColab'); if (!sel) return;
+  const cur = sel.value; sel.innerHTML = '<option value="">Todos os setores</option>';
+  setores.forEach(s => { const o=document.createElement('option'); o.value=o.textContent=s; sel.appendChild(o); });
+  if (cur) sel.value = cur;
 }
-function updateBadge(){
+function updateBadge() {
   const itens = getItens();
   const urg = itens.filter(g=>g.cat==='vencido'||g.cat==='critico').length;
-  const b=$('navBadge'); if(b){ b.textContent=urg; b.style.display = urg>0?'':'none'; }
-}
-function setGreeting(){
-  const h = new Date().getHours();
-  const greeting = h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
-  const nome = (S.sess?.nome||'').split(' ')[0];
-  const gt=$('greetingTitle'); if(gt) gt.textContent = `${greeting}, ${nome}`;
-  const hd=$('hojeDate'); if(hd) hd.textContent = fmtD(new Date());
-
-  const itens = getItens();
-  const vencido = itens.filter(g=>g.cat==='vencido').length;
-  const critico = itens.filter(g=>g.cat==='critico').length;
-  const laudo   = itens.filter(g=>g.cat==='laudo').length;
-  const reprov  = itens.filter(g=>g.cat==='reprovado').length;
-  const sm = $('hojeSummary');
-  if (sm){
-    if (!vencido && !critico && !laudo && !reprov) sm.textContent = 'Tudo em ordem — nenhuma pendência precisa de ação agora.';
-    else{
-      const parts=[];
-      if (vencido) parts.push(`<strong>${vencido}</strong> vencido${vencido>1?'s':''}`);
-      if (critico) parts.push(`<strong>${critico}</strong> vencendo em até 30 dias`);
-      if (laudo)   parts.push(`<strong>${laudo}</strong> aguardando laudo`);
-      if (reprov)  parts.push(`<strong>${reprov}</strong> reprovado${reprov>1?'s':''}`);
-      sm.innerHTML = parts.join(' · ');
-    }
-  }
+  const b = $('navBadge'); if (b) { b.textContent=urg; b.style.display = urg>0 ? '' : 'none'; }
 }
 
 /* ═══════════════════════════════════════════════════════
-   FILA DE TRABALHO — HOJE
+   HOJE — fila de trabalho única
 ═══════════════════════════════════════════════════════ */
 const FILA_CONFIG = [
-  { id:'vencido',  label:'Atrasados',              cats:['vencido'],   dash:'var(--danger)', bg:'bg-danger', hint:'já passou do prazo — trate primeiro' },
-  { id:'critico',  label:'Vence em até 30 dias',   cats:['critico'],   dash:'var(--warn)',   bg:'bg-warn',   hint:'agende ou notifique agora' },
-  { id:'laudo',    label:'Aguardando laudo',       cats:['laudo'],     dash:'var(--info)',   bg:'bg-info',   hint:'exame feito — falta o resultado da clínica' },
-  { id:'reprovado',label:'Reexame necessário',     cats:['reprovado'], dash:'var(--purple)', bg:'bg-purple', hint:'ASO reprovado — agende o reexame' },
-  { id:'alerta',   label:'Vence em até 60 dias',   cats:['alerta'],    dash:'var(--ink-faint)', bg:'bg-mute', hint:'sem urgência ainda', collapsed:true },
-  { id:'ok',       label:'Em dia',                 cats:['ok','sem_hist'], dash:'var(--ok)', bg:'bg-ok',    hint:'nada a fazer', collapsed:true },
+  { id:'urgente', label:'Ação necessária agora', cats:['vencido','critico'], railColor:'var(--red)', dot:'var(--red)',
+    hint:'vencidos e a vencer em até 30 dias' },
+  { id:'laudo', label:'Aguardando resultado da clínica', cats:['laudo'], railColor:'var(--blue)', dot:'var(--blue)',
+    hint:'exame feito, falta o laudo' },
+  { id:'reprovado', label:'Reprovados — reexame necessário', cats:['reprovado'], railColor:'var(--purple)', dot:'var(--purple)',
+    hint:'agende o reexame' },
+  { id:'alerta', label:'Vencendo em até 60 dias', cats:['alerta'], railColor:'var(--amber)', dot:'var(--amber)',
+    hint:'ainda dá tempo de agendar com calma' },
 ];
 
-function toggleSection(id){
-  S.collapsed[id] = !S.collapsed[id];
-  renderFila();
+function setGreeting() {
+  const h = new Date().getHours();
+  const greeting = h<12 ? 'Bom dia' : h<18 ? 'Boa tarde' : 'Boa noite';
+  const nome = (S.sess?.nome||'').split(' ')[0];
+  $('greetTitle').textContent = `${greeting}, ${nome}`;
+  const hoje = new Date();
+  const diasPt = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  const mesesPt = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  $('greetDate').textContent = `${diasPt[hoje.getDay()]}, ${hoje.getDate()} de ${mesesPt[hoje.getMonth()]}`;
 }
 
-function renderFila(){
-  const busca = val('srchPainel').toLowerCase();
-  const setor = $('filtSetor')?.value || '';
-  const itens = getItens().filter(g=>{
-    if (setor && g.cSetor!==setor) return false;
-    if (busca && !g.cNome.toLowerCase().includes(busca) && !g.mat.includes(busca) && !g.cSetor.toLowerCase().includes(busca)) return false;
-    return true;
+function toggleSel(rowIdx, checked) { if (checked) S.sel.add(rowIdx); else S.sel.delete(rowIdx); renderBulkbar(); }
+function clearSel() { S.sel.clear(); renderHoje(); }
+function renderBulkbar() {
+  const bar = $('bulkBar');
+  if (S.sel.size>0) { bar.classList.add('show'); $('bulkCount').textContent = `${S.sel.size} selecionado${S.sel.size>1?'s':''}`; }
+  else bar.classList.remove('show');
+}
+function toggleSec(id) {
+  const el = $(id); const chev = $('chev-'+id);
+  const collapsed = el.classList.toggle('collapsed');
+  if (chev) chev.textContent = collapsed ? '▸' : '▾';
+}
+
+function renderHoje() {
+  setGreeting();
+  const busca = val('srchHoje').toLowerCase();
+  const itens = getItens().filter(g => !busca || g.cNome.toLowerCase().includes(busca) || g.mat.includes(busca) || g.cSetor.toLowerCase().includes(busca));
+
+  // Pílulas
+  const cnt = {};
+  FILA_CONFIG.forEach(fc => cnt[fc.id] = itens.filter(g=>fc.cats.includes(g.cat)).length);
+  $('pillRow').innerHTML = FILA_CONFIG.map(fc => `
+    <div class="pill ${S.filtro===fc.id?'active':''}" onclick="setFiltro('${fc.id}')">
+      <span class="pill-dot" style="background:${fc.dot}"></span>
+      <span class="pill-n">${cnt[fc.id]}</span><span class="pill-l">${fc.label}</span>
+    </div>`).join('') + `
+    <div class="pill ${S.filtro==='all'?'active':''}" onclick="setFiltro('all')">
+      <span class="pill-dot" style="background:var(--t3)"></span>
+      <span class="pill-n">${itens.length}</span><span class="pill-l">Total ativos</span>
+    </div>`;
+
+  const sorted = [...itens].sort((a,b) => {
+    const order = { vencido:0, critico:1, laudo:2, reprovado:3, alerta:4, ok:5, sem_hist:6 };
+    const d = (order[a.cat]??9)-(order[b.cat]??9); if (d!==0) return d;
+    return (diasR(a)??9999)-(diasR(b)??9999);
   });
 
-  let html='';
-  FILA_CONFIG.forEach(fc=>{
-    const grupo = itens.filter(g=>fc.cats.includes(g.cat)).sort((a,b)=>(diasR(a)??9999)-(diasR(b)??9999));
+  const filasVisiveis = S.filtro==='all' ? FILA_CONFIG : FILA_CONFIG.filter(fc => fc.id===S.filtro);
+  let html = '';
+  filasVisiveis.forEach(fc => {
+    const grupo = sorted.filter(g => fc.cats.includes(g.cat));
+    if (!grupo.length && S.filtro!=='all') { html += emptyBlock(); return; }
     if (!grupo.length) return;
-    const isCollapsed = fc.id in S.collapsed ? S.collapsed[fc.id] : !!fc.collapsed;
-    html += `<div class="section">
-      <div class="section-head" onclick="toggleSection('${fc.id}')">
-        <span class="section-dash" style="background:${fc.dash}"></span>
-        <span class="section-lbl">${fc.label}</span>
-        <span class="section-n ${fc.bg}">${grupo.length}</span>
-        <span class="section-hint">${fc.hint}</span>
-        <span class="section-chev">${isCollapsed?'▸':'▾'}</span>
+    html += `<div class="q-section">
+      <div class="q-head">
+        <span class="q-head-label">${fc.label}</span>
+        <span class="q-head-n">${grupo.length}</span>
+        <span class="q-head-hint">${fc.hint}</span>
       </div>
-      <div class="section-body${isCollapsed?' collapsed':''}">
-        ${grupo.map(item=>renderRow(item,fc)).join('')}
-      </div>
+      <div class="q-body">${grupo.map(item => renderRow(item, fc)).join('')}</div>
     </div>`;
   });
+  if (!html) html = `<div class="empty" style="padding:40px;font-size:13.5px">Nenhum item para o filtro selecionado.</div>`;
+  $('filaHoje').innerHTML = html;
 
-  if (!html) html = `<div class="empty">Nenhum registro para os filtros atuais.</div>`;
-  $('filaWrap').innerHTML = html;
-  updateBadge(); setGreeting(); updateBulkbar();
+  // Em dia (colapsado)
+  const okItens = sorted.filter(g => g.cat==='ok' || g.cat==='sem_hist');
+  $('okCount').textContent = okItens.length;
+  $('secOk').innerHTML = okItens.length
+    ? `<div class="q-body">${okItens.map(item => renderRow(item, { railColor:'var(--green)' }, true)).join('')}</div>`
+    : `<div class="empty">Nenhum registro em dia.</div>`;
+
+  renderSemana(itens);
+  updateBadge();
+  renderBulkbar();
 }
+function emptyBlock(){ return `<div class="empty" style="margin-bottom:12px">Nenhum item nesta categoria.</div>`; }
 
-function renderRow(item, fc){
+function setFiltro(f) { S.filtro = f; renderHoje(); }
+
+function renderRow(item, fc, simples) {
   const dias = diasR(item);
-  const { rowIdx, mat, cNome, cSetor, cEmail, cat, validade, dataResp, tipo, reagend, obs } = item;
-  let diasHtml = '<span style="color:var(--ink-faint)">—</span>';
-  if (dias!==null){
-    const col = dias<0?'var(--danger)':dias<=30?'var(--warn)':dias<=60?'var(--ink-soft)':'var(--ok)';
-    const txt = dias>0? dias+'d' : dias===0? 'Hoje' : Math.abs(dias)+'d atrás';
-    diasHtml = `<span class="mono" style="color:${col}">${txt}</span>`;
+  const { rowIdx, mat, cNome, cSetor, cEmail, cat, validade, dataResp, tipo, reagend, custo, dataExame, obs } = item;
+  let diasHtml = '<span style="color:var(--t4)">—</span>';
+  if (dias!==null) {
+    const col = dias<0?'var(--red)':dias<=30?'var(--red)':dias<=60?'var(--amber)':'var(--green)';
+    const txt = dias>0 ? dias+'d' : dias===0 ? 'Hoje' : Math.abs(dias)+'d atrás';
+    diasHtml = `<span style="color:${col}">${txt}</span>`;
   }
-  const metaBits = [esc(cSetor)];
+  const metaBits = [`#${esc(mat)}`, esc(cSetor)];
   if (validade) metaBits.push('Vence '+fmtD(validade));
   if (dataResp && !validade) metaBits.push('Agendado '+fmtD(dataResp));
   if (tipo && tipo!=='Periódico') metaBits.push(esc(tipo));
-  if (reagend>0) metaBits.push(reagend+'× reagendado');
+  if (reagend>0) metaBits.push(`↺ ${reagend}×`);
+  if (custo>0) metaBits.push('R$ '+fmtM(custo));
 
-  let primary;
-  if (cat==='laudo') primary = `<button class="btn btn-dark btn-sm" onclick="openResult(${rowIdx},'${esc(mat)}','${esc(cNome)}',${item.custo||0})">Registrar resultado</button>`;
-  else if (cat==='reprovado') primary = `<button class="btn btn-dark btn-sm" onclick="openReag(${rowIdx},'${esc(mat)}','${esc(cNome)}',true)">Agendar reexame</button>`;
-  else if (cat==='vencido'||cat==='critico') primary = `<button class="btn btn-dark btn-sm" onclick="openRealizado(${rowIdx},'${esc(mat)}','${esc(cNome)}')">Marcar realizado</button>`;
-  else if (cat==='alerta') primary = `<button class="btn btn-line btn-sm" onclick="openRealizado(${rowIdx},'${esc(mat)}','${esc(cNome)}')">Marcar realizado</button>`;
-  else primary = `<button class="btn btn-ghost btn-sm" onclick="openTimeline('${esc(mat)}','${esc(cNome)}','${esc(cSetor)}')">Histórico</button>`;
+  let actionHtml;
+  if (simples) {
+    actionHtml = `<button class="btn btn-ghost btn-sm" onclick="openTimeline('${esc(mat)}','${esc(cNome)}','${esc(cSetor)}')">Ver histórico</button>`;
+  } else if (cat==='laudo') {
+    actionHtml = `<button class="btn btn-primary btn-sm" onclick="openResult(${rowIdx},'${esc(mat)}','${esc(cNome)}',${custo})">Registrar resultado</button>`;
+  } else if (cat==='reprovado') {
+    actionHtml = `<button class="btn btn-primary btn-sm" onclick="openReag(${rowIdx},'${esc(mat)}','${esc(cNome)}',true)">Agendar reexame</button>`;
+  } else if (cat==='vencido' || cat==='critico') {
+    actionHtml = `<button class="btn btn-accent btn-sm" onclick="openNotif(${rowIdx},'${esc(mat)}','${esc(cNome)}','${esc(cEmail)}')">Notificar</button>`;
+  } else {
+    actionHtml = `<button class="btn btn-secondary btn-sm" onclick="openNotif(${rowIdx},'${esc(mat)}','${esc(cNome)}','${esc(cEmail)}')">Notificar</button>`;
+  }
 
-  const ddId = 'dd'+rowIdx;
-  const showNotif = cat==='vencido'||cat==='critico'||cat==='alerta';
-  return `<div class="row" id="wrow-${rowIdx}">
-    <span class="row-bar" style="background:${fc.dash}"></span>
-    <input type="checkbox" class="row-chk" data-mat="${esc(mat)}" data-nome="${esc(cNome)}" data-email="${esc(cEmail)}" data-rowid="${rowIdx}" onchange="toggleSel(this)" ${!showNotif?'style="visibility:hidden"':''}>
+  const kebabItems = [];
+  if (!simples) {
+    kebabItems.push(`<button onclick="closeKebab(this);openRealizado(${rowIdx},'${esc(mat)}','${esc(cNome)}')">Marcar realizado</button>`);
+    if (cat!=='reprovado') kebabItems.push(`<button onclick="closeKebab(this);openReag(${rowIdx},'${esc(mat)}','${esc(cNome)}',false)">Reagendar</button>`);
+    if (cat!=='vencido' && cat!=='critico') kebabItems.push(`<button onclick="closeKebab(this);openNotif(${rowIdx},'${esc(mat)}','${esc(cNome)}','${esc(cEmail)}')">Notificar</button>`);
+  }
+  kebabItems.push(`<button onclick="closeKebab(this);openTimeline('${esc(mat)}','${esc(cNome)}','${esc(cSetor)}')">Ver histórico</button>`);
+  if (obs) kebabItems.push(`<button onclick="closeKebab(this);openObs('${esc(cNome)}','${esc(obs)}')">Ver observação</button>`);
+
+  const checkbox = simples ? '' : `<input type="checkbox" class="row-check" ${S.sel.has(rowIdx)?'checked':''} onchange="toggleSel(${rowIdx},this.checked)">`;
+
+  return `<div class="row">
+    ${checkbox}
+    <div class="row-rail" style="background:${fc.railColor}"></div>
     <div class="row-body">
-      <div class="row-name">${esc(cNome)}${obs?` <span class="mono" style="font-size:10px;color:var(--warn);cursor:pointer" onclick="event.stopPropagation();openObs('${esc(cNome)}','${esc(obs)}')" title="ver observação">note</span>`:''}</div>
-      <div class="row-meta"><span class="mono">#${esc(mat)}</span>${metaBits.map(m=>`<span class="dot-sep">·</span><span>${m}</span>`).join('')}</div>
+      <div class="row-name">${esc(cNome)}</div>
+      <div class="row-meta">${metaBits.map((m,i)=>i? `<span class="sep">·</span>${m}` : m).join('')}</div>
     </div>
-    <div class="row-side">
-      <div class="row-days">${diasHtml}</div>
-      <div class="row-actions">
-        ${primary}
-        <button class="row-more" onclick="toggleDD('${ddId}',event)">⋯</button>
-        <div class="dropdown" id="${ddId}">
-          <button class="dd-item" onclick="closeDD();openNotif('${esc(mat)}','${esc(cNome)}','${esc(cEmail)}')">Notificar responsável</button>
-          <button class="dd-item" onclick="closeDD();openReag(${rowIdx},'${esc(mat)}','${esc(cNome)}',false)">Reagendar</button>
-          <button class="dd-item" onclick="closeDD();openTimeline('${esc(mat)}','${esc(cNome)}','${esc(cSetor)}')">Ver histórico</button>
-        </div>
+    <div class="row-days">${diasHtml}</div>
+    <div class="row-actions">
+      ${actionHtml}
+      <div class="kebab">
+        <button class="kebab-btn" onclick="toggleKebab(this)">⋯</button>
+        <div class="kebab-menu">${kebabItems.join('')}</div>
       </div>
     </div>
   </div>`;
 }
-
-function toggleDD(id, ev){
-  ev.stopPropagation();
-  const wasOpen = $(id).classList.contains('open');
-  closeDD();
-  if(!wasOpen) $(id).classList.add('open');
+function toggleKebab(btn) {
+  document.querySelectorAll('.kebab-menu.open').forEach(m => { if (m!==btn.nextElementSibling) m.classList.remove('open'); });
+  btn.nextElementSibling.classList.toggle('open');
 }
-function closeDD(){ document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open')); }
-document.addEventListener('click', closeDD);
+function closeKebab(btn) { btn.closest('.kebab-menu')?.classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.kebab')) document.querySelectorAll('.kebab-menu.open').forEach(m=>m.classList.remove('open'));
+});
 
-function toggleSel(chk){
-  const key = chk.dataset.rowid;
-  if (chk.checked) S.selecionados.add(key); else S.selecionados.delete(key);
-  updateBulkbar();
-}
-function updateBulkbar(){
-  const n = S.selecionados.size;
-  $('selCount').style.display = n>0?'':'none';
-  $('selCount').textContent = n+' selecionado'+(n>1?'s':'');
-  $('btnNotifLote').style.display = n>0?'':'none';
+function renderSemana(itens) {
+  const hoje = midnight();
+  const diasPt = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = '';
+  for (let i=0;i<7;i++) {
+    const d = addMs(hoje, i*DAY);
+    const n = itens.filter(g => g.validade && isoD(g.validade)===isoD(d)).length;
+    html += `<div class="week-day ${i===0?'today':''}">
+      <div class="week-day-lbl">${i===0?'Hoje':diasPt[d.getDay()]+' '+d.getDate()}</div>
+      <div class="week-day-n">${n}</div>
+      <div class="week-day-sub">${n===1?'vencimento':'vencimentos'}</div>
+    </div>`;
+  }
+  $('weekStrip').innerHTML = html;
 }
 
 /* ═══════════════════════════════════════════════════════
-   MODAIS — AÇÕES
+   MODAIS DE AÇÃO
 ═══════════════════════════════════════════════════════ */
-function selTipo(el){
-  document.querySelectorAll('.tipo-btn[data-tipo]').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active'); S.mTipo = el.dataset.tipo;
-}
-function openRealizado(rowIdx, mat, nome){
+function selTipo(el) { document.querySelectorAll('.tipo-btn[data-tipo]').forEach(b=>b.classList.remove('active')); el.classList.add('active'); S.mTipo = el.dataset.tipo; }
+function openRealizado(rowIdx, mat, nome) {
   $('mRealRowId').value=rowIdx; $('mRealMat').value=mat; $('mRealNome').textContent=nome;
-  $('mRealData').value=''; $('mRealCusto').value=''; $('mRealObs').value='';
-  S.mTipo='Periódico';
+  $('mRealData').value=''; $('mRealCusto').value=''; $('mRealObs').value=''; S.mTipo='Periódico';
   document.querySelectorAll('.tipo-btn[data-tipo]').forEach((b,i)=>b.classList.toggle('active', i===0));
   openModal('mRealizado'); setTimeout(()=>$('mRealData').focus(),80);
 }
-function confirmarRealizado(){
+function confirmarRealizado() {
   const rowIdx=Number($('mRealRowId').value), mat=$('mRealMat').value;
   const data=$('mRealData').value, custo=$('mRealCusto').value||0, obs=$('mRealObs').value;
-  if(!data){ toast('Informe a data do exame.','warn'); return; }
+  if (!data) { toast('Informe a data do exame.','warn'); return; }
   closeModal('mRealizado');
   const idx = S.gestao.findIndex(g=>g.rowIdx===rowIdx);
-  if(idx!==-1) Object.assign(S.gestao[idx], { status:'REALIZADO', dataExame:parseDate(data), custo:Number(custo), tipo:S.mTipo, obs, retorno:null });
-  renderFila();
-  toast('Exame registrado. Registre o resultado quando o laudo chegar.','ok');
+  if (idx!==-1) Object.assign(S.gestao[idx], { status:'REALIZADO', dataExame:parseDate(data), custo:Number(custo), tipo:S.mTipo, obs, retorno:null });
+  renderHoje(); toast('Exame registrado. Registre o resultado quando o laudo chegar.','ok');
   gasSave('processarBaixa', { rowIdx, mat, data, custo, tipo:S.mTipo, obs });
 }
 
-let mRes='APROVADO';
-function selRes(r){
-  mRes=r;
-  $('rBtnOk').className='seg-btn'+(r==='APROVADO'?' sel-ok':'');
-  $('rBtnRp').className='seg-btn'+(r==='REPROVADO'?' sel-rp':'');
-  $('reprNote').style.display = r==='REPROVADO'?'block':'none';
+let mRes = 'APROVADO';
+function selRes(r) {
+  mRes = r;
+  $('rBtnOk').className = 'res-btn'+(r==='APROVADO'?' sel-ok':'');
+  $('rBtnRp').className = 'res-btn'+(r==='REPROVADO'?' sel-rp':'');
+  $('reprNote').style.display = r==='REPROVADO' ? 'block' : 'none';
 }
-function openResult(rowIdx, mat, nome, custo){
-  $('mResRowId').value=rowIdx; $('mResMat').value=mat; $('mResNome').textContent=nome;
-  $('mResCusto').value=custo||0; $('mResData').value=''; $('mResObs').value='';
-  selRes('APROVADO'); openModal('mResultado'); setTimeout(()=>$('mResData').focus(),80);
+function openResult(rowIdx, mat, nome, custo) {
+  $('mResRowId').value=rowIdx; $('mResMat').value=mat; $('mResNome').textContent=nome; $('mResCusto').value=custo||0;
+  $('mResData').value=''; $('mResObs').value=''; selRes('APROVADO');
+  openModal('mResultado'); setTimeout(()=>$('mResData').focus(),80);
 }
-function confirmarResultado(){
+function confirmarResultado() {
   const rowIdx=Number($('mResRowId').value), mat=$('mResMat').value;
   const data=$('mResData').value, custo=$('mResCusto').value||0, obs=$('mResObs').value;
-  if(!data){ toast('Informe a data do laudo.','warn'); return; }
+  if (!data) { toast('Informe a data do laudo.','warn'); return; }
   closeModal('mResultado');
   const idx = S.gestao.findIndex(g=>g.rowIdx===rowIdx);
-  if(mRes==='APROVADO'){
-    if(idx!==-1){
-      const g=S.gestao[idx];
-      const novaVal = g.dataExame ? addMs(g.dataExame,365*DAY) : null;
+  if (mRes==='APROVADO') {
+    if (idx!==-1) {
+      const g = S.gestao[idx]; const novaVal = g.dataExame ? addMs(g.dataExame,365*DAY) : null;
       Object.assign(S.gestao[idx], { retorno:parseDate(data), status:'APROVADO', validade:novaVal, situacao:'APROVADO — CICLO ENCERRADO' });
       S.gestao.push({ rowIdx:Date.now(), mat:g.mat, nome:g.nome, cpf:g.cpf, setor:g.setor, dataExame:null, validade:novaVal,
-        status:'PENDENTE', situacao:'AGUARDANDO AGENDAMENTO', tipo:'Periódico', custo:0, email:g.email,
-        dataResp:null, retorno:null, reagend:0, obs:'' });
+        status:'PENDENTE', situacao:'AGUARDANDO AGENDAMENTO', tipo:'Periódico', custo:0, email:g.email, statusNotif:'Não Enviada',
+        statusResp:'', dataResp:null, retorno:null, reagend:0, obs:'' });
     }
-    if(idx!==-1 && S.gestao[idx].tipo==='Demissional'){
-      const matDem=S.gestao[idx].mat, ci=S.colab.findIndex(c=>c.mat===matDem);
-      if(ci!==-1){
-        S.colab[ci].sit='INATIVO'; S.gestao.pop();
-        gasSave('salvarColaborador', { mat:matDem, nome:S.colab[ci].nome, email:S.colab[ci].email, setor:S.colab[ci].setor, cpf:S.colab[ci].cpf, sit:'INATIVO', adm:isoD(S.colab[ci].adm), aso:isoD(S.colab[ci].aso) });
-        toast('ASO demissional aprovado — colaborador inativado.','ok');
+    if (idx!==-1 && S.gestao[idx].tipo==='Demissional') {
+      const matDem = S.gestao[idx].mat; const ci = S.colab.findIndex(c=>c.mat===matDem);
+      if (ci!==-1) {
+        S.colab[ci].sit = 'INATIVO'; S.gestao.pop();
+        gasSave('salvarColaborador', { mat:matDem, nome:S.colab[ci].nome, email:S.colab[ci].email, setor:S.colab[ci].setor,
+          cpf:S.colab[ci].cpf, sit:'INATIVO', adm:isoD(S.colab[ci].adm), aso:isoD(S.colab[ci].aso) });
+        toast('ASO demissional aprovado. Colaborador inativado.','ok');
       }
     } else toast('ASO aprovado. Novo ciclo criado.','ok');
   } else {
-    if(idx!==-1) Object.assign(S.gestao[idx], { retorno:parseDate(data), status:'REPROVADO', validade:null, situacao:'REPROVADO — AGUARDANDO REEXAME' });
-    toast('ASO reprovado. Agende o reexame na fila.','warn');
+    if (idx!==-1) Object.assign(S.gestao[idx], { retorno:parseDate(data), status:'REPROVADO', validade:null, situacao:'REPROVADO — AGUARDANDO REEXAME' });
+    toast('ASO reprovado. Agende o reexame.','warn');
   }
-  renderFila();
+  renderHoje();
   gasSave('processarRetorno', { rowIdx, mat, data, custo, resultado:mRes, obs });
 }
 
-function openReag(rowIdx, mat, nome, isReexame){
+function openReag(rowIdx, mat, nome, isReexame) {
   $('mReagRowId').value=rowIdx; $('mReagMat').value=mat; $('mReagNomeP').textContent=nome;
   $('mReagData').value=''; $('mReagObs').value=''; $('mReagIsReex').value = isReexame?'true':'false';
-  $('mReagTit').textContent = isReexame?'Agendar reexame':'Reagendar';
-  $('mReagDataLbl').textContent = isReexame?'Data do reexame *':'Nova data prevista *';
-  const info=$('mReagInfo');
-  if(isReexame){ info.textContent='Exame reprovado — volta para pendente após confirmar.'; info.style.display='block'; }
-  else info.style.display='none';
+  $('mReagTit').textContent = isReexame ? 'Agendar reexame' : 'Reagendar';
+  $('mReagDataLbl').textContent = isReexame ? 'Data do reexame *' : 'Nova data prevista *';
+  const info = $('mReagInfo');
+  if (isReexame) { info.textContent='Exame reprovado. O registro volta para pendente após confirmar.'; info.style.display='block'; }
+  else info.style.display = 'none';
   openModal('mReagendar'); setTimeout(()=>$('mReagData').focus(),80);
 }
-function confirmarReag(){
+function confirmarReag() {
   const rowIdx=Number($('mReagRowId').value), mat=$('mReagMat').value;
   const data=$('mReagData').value, isReexame=$('mReagIsReex').value==='true', obs=$('mReagObs').value;
-  if(!data){ toast('Informe a data.','warn'); return; }
+  if (!data) { toast('Informe a data.','warn'); return; }
   closeModal('mReagendar');
   const idx = S.gestao.findIndex(g=>g.rowIdx===rowIdx);
   const atual = idx!==-1 ? (S.gestao[idx].reagend||0)+1 : 1;
-  if(idx!==-1) Object.assign(S.gestao[idx], {
-    dataResp:parseDate(data), reagend:atual, status:'PENDENTE',
-    situacao: isReexame?`REEXAME AGENDADO — ${fmtD(parseDate(data))}`:`REAGENDADO — ${fmtD(parseDate(data))}`,
-    retorno: isReexame?null:S.gestao[idx].retorno, dataExame: isReexame?null:S.gestao[idx].dataExame, validade: isReexame?null:S.gestao[idx].validade,
-  });
-  renderFila();
-  toast((isReexame?'Reexame':'Reagendamento')+' marcado para '+fmtD(parseDate(data)),'ok');
+  if (idx!==-1) Object.assign(S.gestao[idx], { dataResp:parseDate(data), reagend:atual, status:'PENDENTE',
+    situacao: isReexame ? `REEXAME AGENDADO — ${fmtD(parseDate(data))}` : `REAGENDADO — ${fmtD(parseDate(data))}`,
+    retorno: isReexame ? null : S.gestao[idx].retorno, dataExame: isReexame ? null : S.gestao[idx].dataExame,
+    validade: isReexame ? null : S.gestao[idx].validade });
+  renderHoje(); toast((isReexame?'Reexame':'Reagendamento')+' registrado para '+fmtD(parseDate(data)),'ok');
   gasSave('processarReagendamento', { rowIdx, mat, data, isReexame, obs });
 }
 
-/* Notificação — SEMPRE manual, disparada por seleção do usuário */
-function openNotif(mat, nome, email){
-  const chk = { dataset:{ mat, nome, email, rowid:'' } };
-  abrirModalNotif([{ mat, nome, email }]);
+/* Notificação — individual e em lote (sempre manual) */
+let notifBulk = false;
+function openNotif(rowIdx, mat, nome, emailResp) {
+  notifBulk = false;
+  $('mNotifDestWrap').style.display=''; $('mNotifListWrap').style.display='none';
+  $('mNotifRowId').value=rowIdx; $('mNotifMat').value=mat; $('mNotifNome').textContent=nome;
+  $('mNotifDest').value = emailResp||'';
+  $('mNotifMsg').value = `Olá,\n\nO colaborador ${nome} (Mat. ${mat}) possui ASO próximo do vencimento ou já vencido.\n\nPor favor, retorne com a data de disponibilidade para realização do exame.\n\nAtenciosamente,\nRH — Grupo Energia`;
+  openModal('mNotificar'); setTimeout(()=>$('mNotifDest').focus(),80);
 }
-function openNotifLote(){
-  const linhas = [...document.querySelectorAll('.row-chk')].filter(c=>c.checked)
-    .map(c=>({ mat:c.dataset.mat, nome:c.dataset.nome, email:c.dataset.email, rowid:c.dataset.rowid }));
-  if(!linhas.length){ toast('Selecione ao menos um colaborador.','warn'); return; }
-  abrirModalNotif(linhas);
-}
-let notifAlvos = [];
-function abrirModalNotif(alvos){
-  notifAlvos = alvos;
-  $('mNotifCount').textContent = alvos.length===1 ? alvos[0].nome : alvos.length+' colaboradores selecionados';
-  $('mNotifList').innerHTML = alvos.map(a=>`<div class="chk-row"><span class="mono" style="color:var(--ink-faint)">#${esc(a.mat)}</span><span>${esc(a.nome)}</span><span style="margin-left:auto;color:var(--ink-mute)">${esc(a.email)||'sem e-mail cadastrado'}</span></div>`).join('');
-  $('mNotifMsg').value = alvos.length===1
-    ? `Olá,\n\nO colaborador ${alvos[0].nome} (Mat. ${alvos[0].mat}) possui ASO próximo do vencimento ou já vencido.\n\nPor favor, retorne com a data de disponibilidade para o exame.\n\nAtenciosamente,\nRH — Grupo Energia`
-    : `Olá,\n\nOs colaboradores abaixo possuem ASO próximo do vencimento ou já vencido. Por favor, retorne com as datas de disponibilidade.\n\nAtenciosamente,\nRH — Grupo Energia`;
+function openNotifBulk() {
+  if (!S.sel.size) return;
+  notifBulk = true;
+  const itens = getItens().filter(g => S.sel.has(g.rowIdx));
+  $('mNotifDestWrap').style.display='none'; $('mNotifListWrap').style.display='';
+  $('mNotifNome').textContent = `${itens.length} colaboradores selecionados`;
+  $('mNotifListN').textContent = itens.length;
+  $('mNotifList').innerHTML = itens.map(g => `<div>${esc(g.cNome)} — ${esc(g.cEmail||'sem e-mail cadastrado')}</div>`).join('');
+  $('mNotifMsg').value = `Olá,\n\nSeu ASO está próximo do vencimento ou já vencido.\n\nPor favor, retorne com a data de disponibilidade para realização do exame.\n\nAtenciosamente,\nRH — Grupo Energia`;
   openModal('mNotificar');
 }
-async function confirmarNotifLote(){
+async function confirmarNotif() {
   const msg = val('mNotifMsg');
-  const semEmail = notifAlvos.filter(a=>!a.email);
-  const comEmail = notifAlvos.filter(a=>a.email);
-  if(!comEmail.length){ toast('Nenhum destinatário com e-mail cadastrado.','warn'); return; }
-  closeModal('mNotificar');
-  L(true, 'Enviando notificação'+(comEmail.length>1?'ões':'')+'...');
-  try{
-    for(const a of comEmail){
-      await gasPost('enviarEmailManual', { rowId:a.rowid||0, mat:a.mat, dest:a.email, msg });
-    }
-    toast(`Notificação enviada para ${comEmail.length} destinatário${comEmail.length>1?'s':''}.`+(semEmail.length?` ${semEmail.length} sem e-mail cadastrado.`:''), 'ok');
-  }catch(e){ toast('Erro ao enviar notificações.','err'); }
-  finally{ L(false); S.selecionados.clear(); document.querySelectorAll('.row-chk').forEach(c=>c.checked=false); updateBulkbar(); }
+  if (!msg) { toast('Escreva a mensagem.','warn'); return; }
+  if (notifBulk) {
+    const itens = getItens().filter(g => S.sel.has(g.rowIdx));
+    const destinatarios = itens.filter(g => g.cEmail);
+    if (!destinatarios.length) { toast('Nenhum selecionado possui e-mail cadastrado.','warn'); return; }
+    closeModal('mNotificar'); L(true, 'Enviando notificações...');
+    try {
+      const res = await gasPost('enviarNotificacaoLote', { itens: destinatarios.map(g=>({ rowId:g.rowIdx, mat:g.mat, dest:g.cEmail, nome:g.cNome })), msg });
+      toastSrv(res);
+      destinatarios.forEach(g => { const idx=S.gestao.findIndex(x=>x.rowIdx===g.rowIdx); if (idx!==-1) S.gestao[idx].statusNotif='ENVIADA MANUAL'; });
+      clearSel();
+    } catch(e) { toast('Erro ao enviar.','err'); } finally { L(false); }
+    return;
+  }
+  const rowIdx=$('mNotifRowId').value, mat=$('mNotifMat').value, dest=val('mNotifDest');
+  if (!dest) { toast('Informe o e-mail do destinatário.','warn'); return; }
+  closeModal('mNotificar'); L(true, 'Enviando e-mail...');
+  try {
+    const res = await gasPost('enviarEmailManual', { rowIdx, mat, dest, msg });
+    toastSrv(res);
+    const idx = S.gestao.findIndex(g=>g.rowIdx===Number(rowIdx)); if (idx!==-1) S.gestao[idx].statusNotif='ENVIADA MANUAL';
+  } catch(e) { toast('Erro ao enviar.','err'); } finally { L(false); }
 }
 
-function openTimeline(mat, nome, setor){
+function openTimeline(mat, nome, setor) {
   $('mTlNome').textContent = nome; $('mTlSub').textContent = `Matrícula #${mat} · ${setor}`;
   const ciclos = S.gestao.filter(g=>g.mat===mat).sort((a,b)=>(parseDate(a.dataExame||'')||new Date(0))-(parseDate(b.dataExame||'')||new Date(0)));
   const colab = S.colab.find(c=>c.mat===mat);
-  let html='<div class="tl">';
-  if(colab?.adm) html += `<div class="tl-item"><div class="tl-rail"><div class="tl-dot" style="background:var(--ok)"></div><div class="tl-line"></div></div><div><div class="tl-date">${fmtD(colab.adm)}</div><div class="tl-ev">Admissão</div></div></div>`;
-  if(!ciclos.length) html += `<div style="color:var(--ink-faint);font-size:12.5px;padding:12px 0">Nenhum ciclo de ASO registrado.</div>`;
-  else ciclos.forEach(g=>{
-    const dotCol = g.status==='APROVADO'?'var(--ok)':g.status==='REPROVADO'?'var(--danger)':g.cat==='vencido'?'var(--danger)':'var(--signal)';
-    const label = g.status==='APROVADO'?`ASO aprovado — ${esc(g.tipo||'Periódico')}`:g.status==='REPROVADO'?`ASO reprovado — ${esc(g.tipo||'')}`:g.status==='REALIZADO'?'Exame realizado — aguardando laudo':`ASO pendente — ${esc(g.situacao||'')}`;
-    const det=[];
-    if(g.dataExame) det.push('Realizado em '+fmtD(g.dataExame));
-    if(g.validade) det.push('Válido até '+fmtD(g.validade));
-    if(g.custo>0) det.push('R$ '+fmtM(g.custo));
-    if(g.reagend>0) det.push(g.reagend+'× reagendado');
-    html += `<div class="tl-item"><div class="tl-rail"><div class="tl-dot" style="background:${dotCol}"></div><div class="tl-line"></div></div><div><div class="tl-date">${fmtD(g.dataExame||g.dataResp||null)}</div><div class="tl-ev">${label}</div>${det.length?`<div class="tl-detail">${det.join(' · ')}</div>`:''}</div></div>`;
+  let tlHtml = '<div class="timeline">';
+  if (colab?.adm) tlHtml += `<div class="tl-item"><div class="tl-left"><div class="tl-dot ok"></div><div class="tl-line"></div></div><div><div class="tl-date">${fmtD(colab.adm)}</div><div class="tl-event">Admissão</div></div></div>`;
+  if (!ciclos.length) tlHtml += `<div style="color:var(--t4);font-size:12.5px;padding:12px 0">Nenhum ciclo de ASO registrado.</div>`;
+  else ciclos.forEach(g => {
+    const dotClass = g.status==='APROVADO'?'ok':g.status==='REPROVADO'?'rep':g.cat==='vencido'?'rep':'curr';
+    const eventoLabel = g.status==='APROVADO'?`ASO aprovado — ${esc(g.tipo||'Periódico')}`:g.status==='REPROVADO'?`ASO reprovado — ${esc(g.tipo||'')}`:g.status==='REALIZADO'?'Exame realizado — aguardando laudo':`ASO pendente — ${esc(g.situacao||'')}`;
+    const det = [];
+    if (g.dataExame) det.push('Realizado em '+fmtD(g.dataExame));
+    if (g.validade) det.push('Válido até '+fmtD(g.validade));
+    if (g.custo>0) det.push('R$ '+fmtM(g.custo));
+    if (g.reagend>0) det.push(`${g.reagend}× reagendado`);
+    tlHtml += `<div class="tl-item"><div class="tl-left"><div class="tl-dot ${dotClass}"></div><div class="tl-line"></div></div><div><div class="tl-date">${fmtD(g.dataExame||g.dataResp||null)}</div><div class="tl-event">${eventoLabel}</div>${det.length?`<div class="tl-detail">${det.join(' · ')}</div>`:''}</div></div>`;
   });
-  html+='</div>';
-  $('tlContent').innerHTML = html;
-  openModal('mTimeline');
+  tlHtml += '</div>';
+  $('tlContent').innerHTML = tlHtml; openModal('mTimeline');
 }
-function openObs(nome, obs){ $('mObsNome').value=nome; $('mObsTxt').value=obs; openModal('mObs'); }
-function openModal(id){ $(id)?.classList.add('open'); }
-function closeModal(id){ $(id)?.classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); }));
+function openObs(nome, obs) { $('mObsNome').value=nome; $('mObsTxt').value=obs; openModal('mObs'); }
+function openModal(id) { $(id)?.classList.add('open'); }
+function closeModal(id) { $(id)?.classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o => { o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); }); });
 
 /* ═══════════════════════════════════════════════════════
    COLABORADORES
 ═══════════════════════════════════════════════════════ */
-function renderColab(){
+function renderColab() {
   const busca = val('srchColab').toLowerCase();
   const setor = $('filtSetorColab')?.value || '';
-  const f = S.colab.filter(c=>{
-    if(S.sitColab!=='TODOS' && c.sit!==S.sitColab) return false;
-    if(setor && c.setor!==setor) return false;
-    if(busca && !c.nome.toLowerCase().includes(busca) && !c.mat.includes(busca)) return false;
+  const f = S.colab.filter(c => {
+    if (S.sitColab!=='TODOS' && c.sit!==S.sitColab) return false;
+    if (setor && c.setor!==setor) return false;
+    if (busca && !c.nome.toLowerCase().includes(busca) && !c.mat.includes(busca)) return false;
     return true;
   });
-  if(!f.length){ $('tbColab').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--ink-faint);padding:28px">Nenhum colaborador encontrado.</td></tr>'; return; }
-  $('tbColab').innerHTML = f.map(c=>{
-    const idx=S.colab.indexOf(c);
+  if (!f.length) { $('tbColab').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--t4);padding:28px">Nenhum colaborador encontrado.</td></tr>'; return; }
+  $('tbColab').innerHTML = f.map(c => {
+    const idx = S.colab.indexOf(c);
     return `<tr>
-      <td class="td-mono">${esc(c.mat)}</td><td style="font-weight:500">${esc(c.nome)}</td><td>${esc(c.setor)}</td>
-      <td style="color:var(--ink-mute);font-size:12px">${esc(c.email)||'—'}</td>
-      <td><span class="badge ${c.sit==='ATIVO'?'bg-ok':'bg-danger'}">${c.sit}</span></td>
-      <td style="color:var(--ink-mute);font-size:12px">${fmtD(c.aso)}</td>
-      <td><div style="display:flex;gap:5px"><button class="btn btn-line btn-sm" onclick="editColab(${idx})">Editar</button><button class="btn btn-ghost btn-sm" onclick="openTimeline('${esc(c.mat)}','${esc(c.nome)}','${esc(c.setor)}')">Histórico</button></div></td>
+      <td><span class="td-mono">${esc(c.mat)}</span></td>
+      <td style="font-weight:500">${esc(c.nome)}</td>
+      <td style="color:var(--t2)">${esc(c.setor)}</td>
+      <td><span class="badge ${c.sit==='ATIVO'?'b-green':'b-red'}">${c.sit}</span></td>
+      <td style="color:var(--t3);font-size:12px">${fmtD(c.aso)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-secondary btn-sm" onclick="editColab(${idx})">Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openTimeline('${esc(c.mat)}','${esc(c.nome)}','${esc(c.setor)}')">Histórico</button>
+      </div></td>
     </tr>`;
   }).join('');
 }
-function setSitColab(el, s){ S.sitColab=s; document.querySelectorAll('.stab').forEach(b=>b.classList.toggle('active', b.dataset.s===s)); renderColab(); }
-function novoColab(){
+function setSitColab(el, s) { S.sitColab=s; document.querySelectorAll('.stab').forEach(b=>b.classList.toggle('active', b.dataset.s===s)); renderColab(); }
+function novoColab() {
   $('mColabTit').textContent='Novo colaborador'; $('mColabModo').value='novo'; $('mColabExcBtn').style.display='none';
   ['mColabMat','mColabSet','mColabNom','mColabEma','mColabCpf','mColabAdm','mColabAso'].forEach(id=>$(id).value='');
   $('mColabSit').value='ATIVO'; openModal('mColab');
 }
-function editColab(i){
-  const c=S.colab[i]; if(!c) return;
-  $('mColabTit').textContent='Editar: '+c.nome.split(' ').slice(0,2).join(' ');
+function editColab(i) {
+  const c = S.colab[i]; if (!c) return;
+  $('mColabTit').textContent = 'Editar: '+c.nome.split(' ').slice(0,2).join(' ');
   $('mColabModo').value='editar'; $('mColabExcBtn').style.display='';
   $('mColabMat').value=c.mat; $('mColabNom').value=c.nome; $('mColabEma').value=c.email||''; $('mColabSet').value=c.setor||'';
   $('mColabCpf').value=c.cpf||''; $('mColabSit').value=c.sit||'ATIVO';
   $('mColabAdm').value=c.adm?isoD(c.adm):''; $('mColabAso').value=c.aso?isoD(c.aso):'';
   openModal('mColab');
 }
-function salvarColab(){
-  const d = { mat:val('mColabMat'), nome:val('mColabNom'), email:val('mColabEma'), setor:val('mColabSet'), cpf:val('mColabCpf'), sit:$('mColabSit').value, adm:val('mColabAdm'), aso:val('mColabAso') };
-  if(!d.mat||!d.nome){ toast('Matrícula e nome são obrigatórios.','warn'); return; }
+function salvarColab() {
+  const d = { mat:val('mColabMat'), nome:val('mColabNom'), email:val('mColabEma'), setor:val('mColabSet'),
+    cpf:val('mColabCpf'), sit:$('mColabSit').value, adm:val('mColabAdm'), aso:val('mColabAso') };
+  if (!d.mat || !d.nome) { toast('Matrícula e nome são obrigatórios.','warn'); return; }
   closeModal('mColab');
   const ei = S.colab.findIndex(c=>c.mat===d.mat);
-  if(ei!==-1) Object.assign(S.colab[ei], { ...d, aso:parseDate(d.aso), adm:parseDate(d.adm) });
+  if (ei!==-1) Object.assign(S.colab[ei], { ...d, aso:parseDate(d.aso), adm:parseDate(d.adm) });
   else S.colab.push({ ...d, aso:parseDate(d.aso), adm:parseDate(d.adm) });
-  renderColab(); renderFila();
-  toast('Colaborador salvo.','ok');
+  renderColab(); renderHoje(); toast('Colaborador salvo.','ok');
   gasSave('salvarColaborador', d);
 }
-function excluirColab(){
-  const mat=val('mColabMat'), nome=val('mColabNom');
-  if(!confirm(`Excluir ${nome}? Histórico é preservado.`)) return;
-  closeModal('mColab');
-  S.colab = S.colab.filter(c=>c.mat!==mat);
-  renderColab(); renderFila();
-  toast('Colaborador excluído.','ok');
+function excluirColab() {
+  const mat = val('mColabMat'), nome = val('mColabNom');
+  if (!confirm(`Excluir ${nome}?\nHistórico preservado.`)) return;
+  closeModal('mColab'); S.colab = S.colab.filter(c=>c.mat!==mat);
+  renderColab(); renderHoje(); toast('Colaborador excluído.','ok');
   gasSave('excluirColaborador', { mat });
 }
-async function sincronizar(){
-  if(!confirm('Criar ciclos para colaboradores ativos sem ciclo. Continuar?')) return;
-  L(true,'Sincronizando...');
-  try{ toastSrv(await gasPost('sincronizarCiclos', {})); await refresh(); }
-  catch(e){ toast('Erro.','err'); } finally{ L(false); }
+async function sincronizar() {
+  if (!confirm('Criar ciclos para colaboradores ativos sem ciclo. Continuar?')) return;
+  L(true, 'Sincronizando...');
+  try { toastSrv(await gasPost('sincronizarCiclos', {})); await refresh(); }
+  catch(e) { toast('Erro.','err'); } finally { L(false); }
 }
 
 /* ═══════════════════════════════════════════════════════
    CONFIGURAÇÕES
 ═══════════════════════════════════════════════════════ */
-function renderUsers(){
-  if(!isAdmin()) return;
-  fetchCSV(CFG.GID_USERS).then(users=>{
-    S.users=users;
-    $('tbUsers').innerHTML = users.length ? users.map((u,i)=>`<tr>
+function renderUsers() {
+  if (!isAdmin()) return;
+  fetchCSV(CFG.GID_USERS).then(users => {
+    S.users = users;
+    $('tbUsers').innerHTML = users.length ? users.map((u,i) => `<tr>
         <td style="font-weight:500">${esc(u.NOME||u.nome||'—')}</td>
-        <td style="font-size:12px;color:var(--ink-mute)">${esc(u.EMAIL||u.email||'—')}</td>
-        <td><span class="badge ${(u.PERFIL||u.perfil)==='ADMIN'?'bg-danger':'bg-mute'}">${esc(u.PERFIL||u.perfil||'VISUALIZADOR')}</span></td>
-        <td><button class="btn btn-line btn-sm" onclick="editUser(${i})">Editar</button></td>
-      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--ink-faint);padding:20px">Nenhum usuário.</td></tr>';
+        <td style="font-size:12px;color:var(--t3)">${esc(u.EMAIL||u.email||'—')}</td>
+        <td><span class="badge ${(u.PERFIL||u.perfil)==='ADMIN'?'b-blue':'b-gray'}">${esc(u.PERFIL||u.perfil||'VISUALIZADOR')}</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="editUser(${i})">Editar</button></td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--t4);padding:20px">Nenhum usuário.</td></tr>';
   }).catch(()=>{});
 }
-function novoUser(){ $('mUserTit').textContent='Novo usuário'; $('mUserIdx').value=-1; ['mUserNome','mUserEmail','mUserSenha'].forEach(id=>$(id).value=''); $('mUserPerfil').value='ADMIN'; openModal('mUser'); }
-function editUser(i){
-  const u=S.users[i]; if(!u) return;
+function novoUser() { $('mUserTit').textContent='Novo usuário'; $('mUserIdx').value=-1; ['mUserNome','mUserEmail','mUserSenha'].forEach(id=>$(id).value=''); $('mUserPerfil').value='ADMIN'; openModal('mUser'); }
+function editUser(i) {
+  const u = S.users[i]; if (!u) return;
   $('mUserTit').textContent='Editar usuário'; $('mUserIdx').value=i;
-  $('mUserNome').value=u.NOME||u.nome||''; $('mUserEmail').value=u.EMAIL||u.email||''; $('mUserSenha').value=u.SENHA||u.senha||''; $('mUserPerfil').value=u.PERFIL||u.perfil||'ADMIN';
+  $('mUserNome').value=u.NOME||u.nome||''; $('mUserEmail').value=u.EMAIL||u.email||'';
+  $('mUserSenha').value=u.SENHA||u.senha||''; $('mUserPerfil').value=u.PERFIL||u.perfil||'ADMIN';
   openModal('mUser');
 }
-async function salvarUser(){
-  const nome=val('mUserNome'), email=val('mUserEmail'), senha=val('mUserSenha'), perfil=$('mUserPerfil').value;
-  if(!nome||!email||!senha){ toast('Preencha todos os campos.','warn'); return; }
-  if(senha.length<6){ toast('Senha: mínimo 6 caracteres.','warn'); return; }
+async function salvarUser() {
+  const nome=val('mUserNome'),email=val('mUserEmail'),senha=val('mUserSenha'),perfil=$('mUserPerfil').value;
+  if (!nome||!email||!senha) { toast('Preencha todos os campos.','warn'); return; }
+  if (senha.length<6) { toast('Senha mínimo 6 caracteres.','warn'); return; }
   closeModal('mUser'); L(true,'Salvando...');
-  try{ toastSrv(await gasPost('salvarUsuario', { nome, email, senha, perfil, idx:val('mUserIdx') })); renderUsers(); }
-  catch(e){ toast('Erro.','err'); } finally{ L(false); }
+  try { toastSrv(await gasPost('salvarUsuario', { nome,email,senha,perfil,idx:val('mUserIdx') })); renderUsers(); }
+  catch(e) { toast('Erro.','err'); } finally { L(false); }
 }
-function salvarConfig(){
+function salvarConfig() {
   CFG.EMAIL_RH = $('cfgEmailRH').value.trim(); CFG.GAS_URL = $('cfgGasUrl').value.trim();
   CFG.DIAS_60 = Number($('cfgDias60').value)||60; CFG.DIAS_30 = Number($('cfgDias30').value)||30;
   localStorage.setItem('aso_cfg', JSON.stringify({ EMAIL_RH:CFG.EMAIL_RH, GAS_URL:CFG.GAS_URL, DIAS_60:CFG.DIAS_60, DIAS_30:CFG.DIAS_30 }));
-  toast('Configurações salvas.','ok');
-  renderFila();
+  toast('Configurações salvas.','ok'); renderHoje();
 }
-function loadConfig(){
-  try{ const c=JSON.parse(localStorage.getItem('aso_cfg')||'{}'); if(c.GAS_URL) Object.assign(CFG,c); }catch(e){}
-}
+function loadConfig() { try { const c=JSON.parse(localStorage.getItem('aso_cfg')||'{}'); if (c.GAS_URL) Object.assign(CFG,c); } catch(e){} }
 
 /* ═══════════════════════════════════════════════════════
    EXPORTAÇÃO
 ═══════════════════════════════════════════════════════ */
-function openExport(){ $('expDe').value=''; $('expAte').value=''; $('expTipoSel').value='todos'; openModal('mExport'); }
-function getExpRows(){
-  const tipo = $('expTipoSel').value;
-  const de = parseDate(val('expDe')), ate = parseDate(val('expAte'));
-  return getItens().filter(g=>{
-    if(tipo==='realizados' && !(g.status==='REALIZADO'||g.retorno)) return false;
-    if(tipo==='pendentes' && !['PENDENTE','AGENDADO'].includes(g.status)) return false;
-    if(tipo==='reprovados' && g.status!=='REPROVADO') return false;
-    if(de && g.dataExame && g.dataExame<de) return false;
-    if(ate && g.dataExame && g.dataExame>ate) return false;
+let expTipo = 'todos';
+function openExport() { expTipo='todos'; document.querySelectorAll('.exp-b[data-et]').forEach((b,i)=>b.classList.toggle('active', i===0)); openModal('mExport'); }
+function setET(el, t) { expTipo=t; document.querySelectorAll('.exp-b[data-et]').forEach(b=>b.classList.toggle('active', b===el)); }
+function getExpRows() {
+  return getItens().filter(g => {
+    if (expTipo==='realizados' && !(g.status==='REALIZADO'||g.retorno)) return false;
+    if (expTipo==='pendentes' && !['PENDENTE','AGENDADO'].includes(g.status)) return false;
+    if (expTipo==='reprovados' && g.status!=='REPROVADO') return false;
     return true;
-  }).map(g=>({ mat:g.mat, nome:g.cNome, setor:g.cSetor, cpf:g.cpf, tipo:g.tipo||'', dataExame:fmtD(g.dataExame), validade:fmtD(g.validade), retorno:fmtD(g.retorno), status:g.status, situacao:g.situacao, custo:g.custo, reagend:g.reagend, obs:g.obs }));
+  }).map(g => ({ mat:g.mat, nome:g.cNome, setor:g.cSetor, cpf:g.cpf, tipo:g.tipo||'', dataExame:fmtD(g.dataExame), validade:fmtD(g.validade),
+    retorno:fmtD(g.retorno), status:g.status, situacao:g.situacao, custo:g.custo, reagend:g.reagend, obs:g.obs }));
 }
-function exportXLSX(){
-  closeModal('mExport');
-  const rows = getExpRows(); if(!rows.length){ toast('Nenhum registro.','warn'); return; }
+function exportXLSX() {
+  closeModal('mExport'); const rows = getExpRows(); if (!rows.length) { toast('Nenhum registro.','warn'); return; }
   const hdrs = ['Matrícula','Nome','Setor','CPF','Tipo','Data Exame','Validade','Retorno','Status','Situação','Custo R$','Reagend.','Observação'];
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([hdrs, ...rows.map(r=>[r.mat,r.nome,r.setor,r.cpf,r.tipo,r.dataExame,r.validade,r.retorno,r.status,r.situacao,r.custo,r.reagend,r.obs])]);
   ws['!cols'] = [8,28,18,14,14,12,12,12,12,26,10,8,28].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'ASOs');
-  XLSX.writeFile(wb, `ASO_${$('expTipoSel').value}_${fmtD(new Date()).replace(/\//g,'-')}.xlsx`);
+  XLSX.writeFile(wb, `ASO_${expTipo}_${fmtD(new Date()).replace(/\//g,'-')}.xlsx`);
   toast(`Excel: ${rows.length} registros.`,'ok');
 }
+function exportPDF() {
+  closeModal('mExport'); const rows = getExpRows(); if (!rows.length) { toast('Nenhum registro.','warn'); return; }
+  const totalC = rows.reduce((s,r)=>s+Number(r.custo||0),0);
+  const lns = rows.map((r,i)=>`<tr style="background:${i%2?'#fff':'#F7F8F9'}"><td>${r.mat}</td><td>${r.nome}</td><td>${r.setor}</td><td>${r.tipo||'—'}</td><td>${r.dataExame}</td><td>${r.validade}</td><td style="font-weight:700">${r.status}</td><td style="text-align:right">R$ ${fmtM(r.custo)}</td></tr>`).join('');
+  const w = window.open('','_blank','width=960,height=700');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>ASO</title><style>body{font-family:Arial,sans-serif;font-size:11px;color:#333;margin:20px}h1{font-size:15px;color:#14171B;margin-bottom:3px}table{width:100%;border-collapse:collapse}th{background:#14171B;color:#fff;padding:5px 7px;text-align:left;font-size:9px;text-transform:uppercase}td{padding:4px 7px;border-bottom:1px solid #EEE}@media print{button{display:none}}</style></head><body><h1>Grupo Energia — Gestão de ASOs</h1><div style="color:#999;font-size:9px;margin-bottom:12px">Gerado em ${fmtDT(new Date())} · ${rows.length} registros</div><table><thead><tr><th>Mat.</th><th>Nome</th><th>Setor</th><th>Tipo</th><th>Data Exame</th><th>Validade</th><th>Status</th><th>Custo</th></tr></thead><tbody>${lns}</tbody></table><div style="margin-top:10px;text-align:right;font-weight:700">Total: R$ ${fmtM(totalC)}</div><` + `script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close(); toast(`PDF: ${rows.length} registros.`,'ok');
+}
 
-/* ── Init ─────────────────────────────────────────────── */
-window.addEventListener('DOMContentLoaded', ()=>{
+/* ── Init ────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
   $('anoLogin').textContent = new Date().getFullYear();
+  const anoSobre = $('anoSobre'); if (anoSobre) anoSobre.textContent = new Date().getFullYear();
   loadConfig();
-  if($('cfgEmailRH')) $('cfgEmailRH').value = CFG.EMAIL_RH;
-  if($('cfgGasUrl'))  $('cfgGasUrl').value  = CFG.GAS_URL;
+  if ($('cfgEmailRH')) $('cfgEmailRH').value = CFG.EMAIL_RH;
+  if ($('cfgGasUrl')) $('cfgGasUrl').value = CFG.GAS_URL;
   const sess = loadSession();
-  if(sess){ S.sess=sess; enterApp(sess); } else { $('loginWrap').classList.add('show'); }
+  if (sess) { S.sess = sess; enterApp(sess); } else { $('loginWrap').classList.add('show'); }
 });
 </script>
 </body>
