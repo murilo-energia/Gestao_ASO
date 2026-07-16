@@ -171,7 +171,7 @@ a { color:inherit; text-decoration:none; }
 .sb-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:16px; border-radius:0 3px 3px 0; background:var(--brand); }
 .sb-item .ic { color:var(--t3); flex-shrink:0; }
 .sb-item:hover .ic, .sb-item.active .ic { color:currentColor; }
-.sb-badge { margin-left:auto; background:var(--sv-red); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:10px; min-width:17px; text-align:center; line-height:14px; }
+.sb-badge { margin-left:auto; background:var(--v-red-d); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:10px; min-width:17px; text-align:center; line-height:14px; }
 .sidebar.collapsed .sb-item { justify-content:center; margin:1px 6px; width:calc(100% - 12px); padding:9px 0; }
 .sidebar.collapsed .sb-item span:not(.sb-badge), .sidebar.collapsed .sb-item-label { display:none; }
 .sidebar.collapsed .sb-badge { position:absolute; top:4px; right:6px; margin-left:0; }
@@ -308,18 +308,19 @@ select.input option { background:var(--sf); }
 .wcard-action { flex-shrink:0; }
 .wcard-actions-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
 
-.action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:20px; font-size:11.5px; font-weight:600; border:1px solid transparent; cursor:pointer; transition:all .12s; white-space:nowrap; box-shadow:0 1px 3px rgba(36,34,32,.14); }
-.ab-notify  { background:var(--brand);   color:#fff; border-color:var(--brand); }
-.ab-notify:hover  { background:var(--brand-d); border-color:var(--brand-d); }
-.ab-schedule{ background:var(--v-blue);  color:#fff; border-color:var(--v-blue); }
-.ab-schedule:hover{ background:var(--v-blue-d); border-color:var(--v-blue-d); }
-.ab-done    { background:var(--v-green); color:#fff; border-color:var(--v-green); }
-.ab-done:hover    { background:var(--v-green-d); border-color:var(--v-green-d); }
-.ab-result  { background:var(--v-blue);  color:#fff; border-color:var(--v-blue); }
-.ab-result:hover  { background:var(--v-blue-d); border-color:var(--v-blue-d); }
-.ab-reexame { background:var(--v-purple);color:#fff; border-color:var(--v-purple); }
-.ab-reexame:hover { background:var(--v-purple-d); border-color:var(--v-purple-d); }
-.ab-view    { background:var(--sf3); color:var(--t2); border-color:var(--bd); box-shadow:none; }
+.action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:20px; font-size:11.5px; font-weight:600; border:1px solid transparent; cursor:pointer; transition:all .12s; white-space:nowrap; }
+.action-btn:hover { box-shadow:0 2px 6px rgba(36,34,32,.18); }
+.ab-notify  { background:var(--brand-08);    color:var(--brand-d); border-color:var(--brand-24); }
+.ab-notify:hover  { background:var(--brand); color:#fff; border-color:var(--brand); }
+.ab-schedule{ background:var(--sv-blue-bg);  color:var(--sv-blue); border-color:var(--sv-blue-bd); }
+.ab-schedule:hover{ background:var(--v-blue); color:#fff; border-color:var(--v-blue); }
+.ab-done    { background:var(--sv-green-bg); color:var(--sv-green); border-color:var(--sv-green-bd); }
+.ab-done:hover    { background:var(--v-green); color:#fff; border-color:var(--v-green); }
+.ab-result  { background:var(--sv-blue-bg);  color:var(--sv-blue); border-color:var(--sv-blue-bd); }
+.ab-result:hover  { background:var(--v-blue); color:#fff; border-color:var(--v-blue); }
+.ab-reexame { background:var(--sv-purple-bg);color:var(--sv-purple); border-color:var(--sv-purple-bd); }
+.ab-reexame:hover { background:var(--v-purple); color:#fff; border-color:var(--v-purple); }
+.ab-view    { background:var(--sf3); color:var(--t2); border-color:var(--bd); }
 .ab-view:hover    { background:var(--sf3); color:var(--t1); border-color:var(--bd2); }
 
 .empty-queue { text-align:center; padding:22px 16px; color:var(--t4); font-size:12.5px; background:var(--sf2); border:1px dashed var(--bd2); border-radius:var(--radius); display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -1343,7 +1344,7 @@ function renderWorkCard(item, fc) {
 
   let diasHtml = '<span style="color:var(--t4)">—</span>';
   if (dias !== null) {
-    const col = dias < 0 ? 'var(--sv-red)' : dias <= 30 ? 'var(--sv-orange)' : dias <= 60 ? 'var(--sv-amber)' : 'var(--sv-green)';
+    const col = dias < 0 ? 'var(--v-red-d)' : dias <= 30 ? 'var(--sv-orange)' : dias <= 60 ? 'var(--sv-amber)' : 'var(--sv-green)';
     const fw  = dias <= 30 ? 'font-weight:800' : 'font-weight:600';
     const txt = dias > 0 ? dias + 'd' : dias === 0 ? 'Hoje' : Math.abs(dias) + 'd atrás';
     diasHtml  = `<span class="mono" style="color:${col};${fw}">${txt}</span>`;
