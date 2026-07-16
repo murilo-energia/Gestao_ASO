@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════
-   GESTÃO DE ASOs v6.0 — Grupo Energia
+   GESTÃO DE ASOs v1.0 — Grupo Energia
    Design System: Centro Operacional — revisão visual
    Base: paleta extraída da marca (laranja + carvão),
    tipografia Manrope (display) + Inter (interface)
@@ -46,6 +46,13 @@
   --sv-blue:#3E6E96;   --sv-blue-bg:rgba(62,110,150,.08);   --sv-blue-bd:rgba(62,110,150,.20);
   --sv-purple:#7B5591; --sv-purple-bg:rgba(123,85,145,.08); --sv-purple-bd:rgba(123,85,145,.20);
   --sv-gray:#8A8377;   --sv-gray-bg:rgba(138,131,119,.08);  --sv-gray-bd:rgba(138,131,119,.20);
+
+  /* Vivo — tons saturados usados só nos números de destaque e botões preenchidos */
+  --v-red:#E0393E;    --v-red-d:#C42328;
+  --v-blue:#3169E0;   --v-blue-d:#2453B8;
+  --v-purple:#8B5CF6; --v-purple-d:#7440E0;
+  --v-amber:#DB8A17;  --v-amber-d:#B8710D;
+  --v-green:#17A363;  --v-green-d:#0F8750;
 
   --sidebar:212px;
   --sidebar-collapsed:64px;
@@ -110,8 +117,9 @@ a { color:inherit; text-decoration:none; }
   border-radius:50%;
 }
 .login-brand { position:relative; z-index:1; }
-.login-brand-logo { height:36px; object-fit:contain; margin-bottom:30px; }
-.login-brand-logo-fb { font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; color:var(--brand-l); margin-bottom:30px; display:block; letter-spacing:-.3px; }
+.login-brand-logo-wrap { display:inline-flex; align-items:center; padding:12px 18px; border-radius:12px; background:rgba(0,0,0,.22); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); margin-bottom:30px; }
+.login-brand-logo { height:36px; object-fit:contain; margin-bottom:0; filter:drop-shadow(0 2px 10px rgba(0,0,0,.55)) brightness(1.12) saturate(1.15); }
+.login-brand-logo-fb { font-family:'Manrope',sans-serif; font-size:21px; font-weight:800; color:var(--brand-l); margin-bottom:0; display:block; letter-spacing:-.3px; }
 .login-brand-title { font-family:'Manrope',sans-serif; font-size:29px; font-weight:700; color:#fff; line-height:1.22; letter-spacing:-.6px; margin-bottom:12px; }
 .login-brand-sub { font-size:13px; color:rgba(255,255,255,.48); line-height:1.65; max-width:320px; }
 .login-dots { position:absolute; bottom:52px; right:52px; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
@@ -254,13 +262,13 @@ select.input option { background:var(--sf); }
 
 .kpi-row { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
 @media(max-width:1100px) { .kpi-row { grid-template-columns:repeat(3,1fr); } }
-.kpi-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--radius); padding:13px 14px; cursor:pointer; transition:all .14s; position:relative; overflow:hidden; user-select:none; }
+.kpi-card { background:var(--sf); border:1px solid var(--bd); border-left:3px solid var(--kc,var(--bd)); border-radius:var(--radius); padding:13px 14px; cursor:pointer; transition:all .14s; position:relative; overflow:hidden; user-select:none; }
 .kpi-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .kpi-ic { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--kbg,var(--sf3)); color:var(--kc,var(--t3)); }
 .kpi-card:hover { border-color:var(--bd2); box-shadow:var(--sh); transform:translateY(-1px); }
-.kpi-card.active { border-color:var(--kc,var(--bd2)); box-shadow:0 0 0 1px var(--kc,transparent); }
+.kpi-card.active { box-shadow:0 0 0 1px var(--kc,transparent),var(--sh); }
 .kpi-label { font-size:9.5px; font-weight:600; color:var(--t3); text-transform:uppercase; letter-spacing:.4px; }
-.kpi-value { font-family:'Manrope',sans-serif; font-size:26px; font-weight:800; color:var(--t1); line-height:1; letter-spacing:-.8px; }
+.kpi-value { font-family:'Manrope',sans-serif; font-size:26px; font-weight:800; color:var(--kc,var(--t1)); line-height:1; letter-spacing:-.8px; }
 .kpi-hint { font-size:10px; color:var(--t4); margin-top:4px; }
 
 .painel-toolbar { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
@@ -300,18 +308,18 @@ select.input option { background:var(--sf); }
 .wcard-action { flex-shrink:0; }
 .wcard-actions-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
 
-.action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:20px; font-size:11.5px; font-weight:600; border:1px solid transparent; cursor:pointer; transition:all .12s; white-space:nowrap; }
-.ab-notify  { background:var(--brand-08);    color:var(--brand-d); border-color:var(--brand-24); }
-.ab-notify:hover  { background:var(--brand);  color:#fff; }
-.ab-schedule{ background:var(--sv-blue-bg);  color:var(--sv-blue); border-color:var(--sv-blue-bd); }
-.ab-schedule:hover{ background:var(--sv-blue); color:#fff; }
-.ab-done    { background:var(--sv-green-bg); color:var(--sv-green); border-color:var(--sv-green-bd); }
-.ab-done:hover    { background:var(--sv-green); color:#fff; }
-.ab-result  { background:var(--sv-blue-bg);  color:var(--sv-blue); border-color:var(--sv-blue-bd); }
-.ab-result:hover  { background:var(--sv-blue); color:#fff; }
-.ab-reexame { background:var(--sv-purple-bg);color:var(--sv-purple); border-color:var(--sv-purple-bd); }
-.ab-reexame:hover { background:var(--sv-purple); color:#fff; }
-.ab-view    { background:var(--sf3); color:var(--t2); border-color:var(--bd); }
+.action-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:20px; font-size:11.5px; font-weight:600; border:1px solid transparent; cursor:pointer; transition:all .12s; white-space:nowrap; box-shadow:0 1px 3px rgba(36,34,32,.14); }
+.ab-notify  { background:var(--brand);   color:#fff; border-color:var(--brand); }
+.ab-notify:hover  { background:var(--brand-d); border-color:var(--brand-d); }
+.ab-schedule{ background:var(--v-blue);  color:#fff; border-color:var(--v-blue); }
+.ab-schedule:hover{ background:var(--v-blue-d); border-color:var(--v-blue-d); }
+.ab-done    { background:var(--v-green); color:#fff; border-color:var(--v-green); }
+.ab-done:hover    { background:var(--v-green-d); border-color:var(--v-green-d); }
+.ab-result  { background:var(--v-blue);  color:#fff; border-color:var(--v-blue); }
+.ab-result:hover  { background:var(--v-blue-d); border-color:var(--v-blue-d); }
+.ab-reexame { background:var(--v-purple);color:#fff; border-color:var(--v-purple); }
+.ab-reexame:hover { background:var(--v-purple-d); border-color:var(--v-purple-d); }
+.ab-view    { background:var(--sf3); color:var(--t2); border-color:var(--bd); box-shadow:none; }
 .ab-view:hover    { background:var(--sf3); color:var(--t1); border-color:var(--bd2); }
 
 .empty-queue { text-align:center; padding:22px 16px; color:var(--t4); font-size:12.5px; background:var(--sf2); border:1px dashed var(--bd2); border-radius:var(--radius); display:flex; flex-direction:column; align-items:center; gap:6px; }
@@ -652,8 +660,10 @@ tbody tr:hover td { background:var(--brand-05); }
       <div class="login-dot lit"></div><div class="login-dot"></div><div class="login-dot"></div><div class="login-dot lit"></div><div class="login-dot"></div>
     </div>
     <div class="login-brand">
-      <img src="logo.png" class="login-brand-logo" alt="Grupo Energia" onerror="this.style.display='none';document.getElementById('loginBrandFb').style.display='block'">
-      <span id="loginBrandFb" style="display:none" class="login-brand-logo-fb">◈ ENERGIA</span>
+      <div class="login-brand-logo-wrap">
+        <img src="logo.png" class="login-brand-logo" alt="Grupo Energia" onerror="this.style.display='none';document.getElementById('loginBrandFb').style.display='block'">
+        <span id="loginBrandFb" style="display:none" class="login-brand-logo-fb">◈ ENERGIA</span>
+      </div>
       <div class="login-brand-title">Gestão de<br>ASOs</div>
       <div class="login-brand-sub">Centro operacional de atestados de saúde ocupacional — alertas, fluxo e agenda em um só lugar.</div>
     </div>
@@ -742,27 +752,27 @@ tbody tr:hover td { background:var(--brand-05); }
           </div>
 
           <div class="kpi-row">
-            <div class="kpi-card active" style="--kc:var(--sv-red);--kbg:var(--sv-red-bg)" data-f="acao" onclick="setFiltro('acao')">
+            <div class="kpi-card active" style="--kc:var(--v-red);--kbg:var(--sv-red-bg)" data-f="acao" onclick="setFiltro('acao')">
               <div class="kpi-card-top"><div class="kpi-label">Ação Necessária</div><div class="kpi-ic"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20h-19L12 3.5Z"/><line x1="12" y1="9.5" x2="12" y2="14"/></svg></div></div>
               <div class="kpi-value" id="kAcao">—</div>
               <div class="kpi-hint">vencidos + críticos</div>
             </div>
-            <div class="kpi-card" style="--kc:var(--sv-blue);--kbg:var(--sv-blue-bg)" data-f="laudo" onclick="setFiltro('laudo')">
+            <div class="kpi-card" style="--kc:var(--v-blue);--kbg:var(--sv-blue-bg)" data-f="laudo" onclick="setFiltro('laudo')">
               <div class="kpi-card-top"><div class="kpi-label">Aguard. Laudo</div><div class="kpi-ic"><svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg></div></div>
               <div class="kpi-value" id="kLaudo">—</div>
               <div class="kpi-hint">resultado pendente</div>
             </div>
-            <div class="kpi-card" style="--kc:var(--sv-purple);--kbg:var(--sv-purple-bg)" data-f="reprovado" onclick="setFiltro('reprovado')">
+            <div class="kpi-card" style="--kc:var(--v-purple);--kbg:var(--sv-purple-bg)" data-f="reprovado" onclick="setFiltro('reprovado')">
               <div class="kpi-card-top"><div class="kpi-label">Reprovados</div><div class="kpi-ic"><svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div></div>
               <div class="kpi-value" id="kReprov">—</div>
               <div class="kpi-hint">reexame necessário</div>
             </div>
-            <div class="kpi-card" style="--kc:var(--sv-amber);--kbg:var(--sv-amber-bg)" data-f="alerta" onclick="setFiltro('alerta')">
+            <div class="kpi-card" style="--kc:var(--v-amber);--kbg:var(--sv-amber-bg)" data-f="alerta" onclick="setFiltro('alerta')">
               <div class="kpi-card-top"><div class="kpi-label">Alerta ≤60d</div><div class="kpi-ic"><svg class="ic ic-sm" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20h-19L12 3.5Z"/><line x1="12" y1="9.5" x2="12" y2="14"/></svg></div></div>
               <div class="kpi-value" id="kAlerta">—</div>
               <div class="kpi-hint">agendar em breve</div>
             </div>
-            <div class="kpi-card" style="--kc:var(--sv-green);--kbg:var(--sv-green-bg)" data-f="ok" onclick="setFiltro('ok')">
+            <div class="kpi-card" style="--kc:var(--v-green);--kbg:var(--sv-green-bg)" data-f="ok" onclick="setFiltro('ok')">
               <div class="kpi-card-top"><div class="kpi-label">Em Dia</div><div class="kpi-ic"><svg class="ic ic-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="8 12.5 11 15.5 16 9"/></svg></div></div>
               <div class="kpi-value" id="kOk">—</div>
               <div class="kpi-hint">&gt;60 dias</div>
@@ -858,7 +868,7 @@ tbody tr:hover td { background:var(--brand-05); }
             <div class="card-header"><div class="card-title">Sobre</div></div>
             <div style="padding:17px;font-size:13px;color:var(--t2);line-height:1.9">
               <div class="hd" style="font-size:18px;font-weight:800;color:var(--brand);margin-bottom:6px;letter-spacing:-.4px">Gestão de ASOs</div>
-              <div style="color:var(--t3);margin-bottom:14px;font-size:12px">Grupo Energia · v6.0 — Centro Operacional</div>
+              <div style="color:var(--t3);margin-bottom:14px;font-size:12px">Grupo Energia · v1.0 — Centro Operacional</div>
               <div><strong>Fluxo:</strong> Vencimento → Notificação → Agendamento → Realização → Resultado → Novo ciclo automático.</div>
               <div style="height:1px;background:var(--bd);margin:12px 0"></div>
               <div><strong>Infraestrutura:</strong> GitHub Pages + Google Sheets + GAS</div>
@@ -879,7 +889,7 @@ tbody tr:hover td { background:var(--brand-05); }
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   GESTÃO DE ASOs v6.0 — Centro Operacional — Grupo Energia
+   GESTÃO DE ASOs v1.0 — Centro Operacional — Grupo Energia
    Mesma lógica de negócio da v5 · camada visual revisada
 ═══════════════════════════════════════════════════════════ */
 
